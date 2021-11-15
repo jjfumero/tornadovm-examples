@@ -88,7 +88,6 @@ public class HelloTornado {
                 .task("t0", HelloTornado::parallelInitialization, array)
                 .task("t1", HelloTornado::computeSquare, array)
                 .streamOut(array);
-
         ts.execute();
     }
 }
