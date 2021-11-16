@@ -25,7 +25,6 @@ import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.awt.image.Kernel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.util.stream.IntStream;
@@ -53,7 +52,7 @@ import java.util.stream.IntStream;
  */
 public class Mandelbrot {
 
-    private static final int MAX = 100;
+    private static final int MAX = 11;
 
     public static void mandelbrotFractal(int size, short[] output) {
         final int iterations = 10000;
