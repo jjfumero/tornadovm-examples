@@ -16,13 +16,19 @@
 package io.github.jjfumero;
 
 import io.github.jjfumero.common.Options;
+import uk.ac.manchester.tornado.api.GridScheduler;
+import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.WorkerGrid;
+import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.awt.image.Kernel;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.util.stream.IntStream;
 
 /**
  * This Mandelbrot version adapted from the examples available in the
@@ -79,10 +85,67 @@ public class Mandelbrot {
         }
     }
 
+    public static void mandelbrotFractalWithParallelStreams(int size, short[] output) {
+        final int iterations = 10000;
+        float space = 2.0f / size;
+        IntStream.range(0, size).parallel().forEach(i -> {
+            IntStream.range(0, size).parallel().forEach(j -> {
+                float Zr = 0.0f;
+                float Zi = 0.0f;
+                float Cr = (1 * j * space - 1.5f);
+                float Ci = (1 * i * space - 1.0f);
+                float ZrN = 0;
+                float ZiN = 0;
+                int y = 0;
+                for (int ii = 0; ii < iterations; ii++) {
+                    if (ZiN + ZrN <= 4.0f) {
+                        Zi = 2.0f * Zr * Zi + Ci;
+                        Zr = 1 * ZrN - ZiN + Cr;
+                        ZiN = Zi * Zi;
+                        ZrN = Zr * Zr;
+                        y++;
+                    } else {
+                        ii = iterations;
+                    }
+                }
+                short r = (short) ((y * 255) / iterations);
+                output[i * size + j] = r;
+            });
+        });
+    }
+
+    public static void mandelbrotFractalWithContext(int size, short[] output, KernelContext context) {
+        final int iterations = 10000;
+        float space = 2.0f / size;
+        int i = context.globalIdx;
+        int j = context.globalIdy;
+        float Zr = 0.0f;
+        float Zi = 0.0f;
+        float Cr = (1 * j * space - 1.5f);
+        float Ci = (1 * i * space - 1.0f);
+        float ZrN = 0;
+        float ZiN = 0;
+        int y = 0;
+        for (int ii = 0; ii < iterations; ii++) {
+            if (ZiN + ZrN <= 4.0f) {
+                Zi = 2.0f * Zr * Zi + Ci;
+                Zr = 1 * ZrN - ZiN + Cr;
+                ZiN = Zi * Zi;
+                ZrN = Zr * Zr;
+                y++;
+            } else {
+                ii = iterations;
+            }
+        }
+        short r = (short) ((y * 255) / iterations);
+        output[i * size + j] = r;
+    }
+
     public static class Benchmark {
         int size = Integer.parseInt(System.getProperty("x", "512"));
         TaskSchedule ts;
         short[] mandelbrotImage;
+        GridScheduler grid;
 
         private Options.Implementation implementation;
 
@@ -93,10 +156,16 @@ public class Mandelbrot {
                 ts = new TaskSchedule("s0") //
                         .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
                         .streamOut(mandelbrotImage);
-                ts.warmup();
-            }
-            else if (implementation == Options.Implementation.TORNADO_KERNEL) {
-                // Not implemented yet.
+            } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
+                WorkerGrid workerGrid = new WorkerGrid2D(size, size);
+                workerGrid.setLocalWork(16, 16, 1);
+                grid = new GridScheduler();
+                grid.setWorkerGrid("s0.t0", workerGrid);
+                KernelContext context = new KernelContext();
+
+                ts = new TaskSchedule("s0") //
+                        .task("t0", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
+                        .streamOut(mandelbrotImage);
             }
         }
 
@@ -114,10 +183,28 @@ public class Mandelbrot {
             }
         }
 
+        public void parallelStreamComputation() {
+            for (int i = 0; i < MAX; i++) {
+                long start = System.nanoTime();
+                mandelbrotFractalWithParallelStreams(size, mandelbrotImage);
+                long end = System.nanoTime();
+                System.out.println("Sequential Total time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+            }
+        }
+
         private void runTornadoVM() {
             for (int i = 0; i< MAX; i++) {
                 long start = System.nanoTime();
                 ts.execute();
+                long end = System.nanoTime();
+                System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+            }
+        }
+
+        private void runTornadoVMWithContext() {
+            for (int i = 0; i< MAX; i++) {
+                long start = System.nanoTime();
+                ts.execute(grid);
                 long end = System.nanoTime();
                 System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
             }
@@ -145,7 +232,16 @@ public class Mandelbrot {
                 case SEQUENTIAL:
                     sequentialComputation();
                     break;
+                case MT:
+                    parallelStreamComputation();
+                    break;
                 case TORNADO_LOOP:
+                    runTornadoVM();
+                    break;
+                case TORNADO_KERNEL:
+                    runTornadoVMWithContext();
+                    break;
+                default:
                     runTornadoVM();
                     break;
             }
