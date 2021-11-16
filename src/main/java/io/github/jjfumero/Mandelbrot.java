@@ -24,12 +24,25 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 
-import static io.github.jjfumero.common.Options.VALID_OPTIONS;
-
 /**
- * Mandelbrot version taken from the examples available in the TornadoVM Framework: tornadovm.org
+ * This Mandelbrot version adapted from the examples available in the
+ * TornadoVM Framework: <url>https://tornadovm.org</url>
+ * This application is for demonstration purposes to show demos and
+ * how to use and run TornadoVM on different platforms.
  *
  * This sample generates an image representing the Mandelbrot fractal. 
+ *
+ * How to run?
+ *
+ * <code>
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar -Ds0.t0.device=0:0 io.github.jjfumero.Mandelbrot
+ * </code>
+ *
+ * How to run on another device?
+ *
+ * <code>
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar -Ds0.t0.device=1:0 io.github.jjfumero.Mandelbrot
+ * </code>
  *
  */
 public class Mandelbrot {
@@ -138,23 +151,18 @@ public class Mandelbrot {
             }
             writeFile();
         }
-
     }
 
     public static void main(String[] args) {
         String version = "tornado";
         if (args.length != 0) {
             version = args[0].substring(2);
-            if (!VALID_OPTIONS.containsKey(version)) {
-                System.out.println("Option not valid. Use:");
-                System.out.println("\t--tornado: for accelerated version with TornadoVM");
-                System.out.println("\t--tornadoContext: for accelerated version with TornadoVM");
-                System.out.println("\t--seq: for running the sequential version with Java Streams");
-                System.out.println("\t--mt: for running the CPU multi-thread version with Java Parallel Streams");
+            if (!Options.isValid(version)) {
+                Options.printHelp();
                 System.exit(-1);
             }
         }
-        Benchmark mandelbrot = new Benchmark(VALID_OPTIONS.get(version));
+        Benchmark mandelbrot = new Benchmark(Options.getImplementation(version));
         mandelbrot.run();
     }
 }
