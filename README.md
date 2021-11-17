@@ -12,12 +12,13 @@ Run run the examples, first build TornadoVM with both backends (OpenCL and PTX).
 
 **Important:** If you do not have an NVIDIA GPU and CUDA installed, do not use the flag `--ptx` in the following command. 
 TornadoVM builds with the OpenCL backend by default. 
+Similarly, if your device/system does not support SPIRV, do not use the `--spirv` flag. 
 
 
 ```bash
 git clone https://github.com/beehive-lab/tornadovm-installer.git 
 cd tornadovm-installer
-./tornadovmInstaller.sh --jdk8 --opencl --ptx 
+./tornadovmInstaller.sh --jdk8 --opencl --ptx --spirv
 source TornadoVM-OpenJDK8/TornadoVM/source.sh
 ```
 
