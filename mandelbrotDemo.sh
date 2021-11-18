@@ -16,6 +16,6 @@ tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jj
 tornado --debug --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --tornado
 spirv-dis <spirv-binary> 
 
-## Change the device 
+## Change the device
 tornado --threadInfo -Ds0.t0.device=1:1 -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --tornado
 
