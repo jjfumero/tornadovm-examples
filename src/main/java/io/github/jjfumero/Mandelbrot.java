@@ -52,7 +52,7 @@ import java.util.stream.IntStream;
  */
 public class Mandelbrot {
 
-    private static final int MAX = 10;
+    private static final int MAX = 100;
 
     public static void mandelbrotFractal(int size, short[] output) {
         final int iterations = 10000;
