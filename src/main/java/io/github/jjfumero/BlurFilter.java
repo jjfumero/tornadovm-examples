@@ -96,14 +96,19 @@ public class BlurFilter {
         loadImage();
         initData();
         if (implementation == Implementation.TORNADO_LOOP) {
+
             // Tasks using the Loop Parallel API
             parallelFilter = new TaskSchedule("blur") //
                     .task("red", BlurFilter::compute, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("green", BlurFilter::compute, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blue", BlurFilter::compute, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
                     .streamOut(redFilter, greenFilter, blueFilter);
+
+            // Set the Device using the TornadoVM API
             setDeviceForTaskSchedule(backendIndex, deviceIndex);
+
         } else if (implementation == Implementation.TORNADO_KERNEL) {
+
             // Tasks using the Kernel API
             KernelContext context = new KernelContext();
             grid = new GridScheduler();
@@ -119,6 +124,8 @@ public class BlurFilter {
                     .task("green", BlurFilter::computeWithContext, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("blue", BlurFilter::computeWithContext, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH, context) //
                     .streamOut(redFilter, greenFilter, blueFilter);
+
+            // Set the Device using the TornadoVM API
             setDeviceForTaskSchedule(backendIndex, deviceIndex);
         }
     }
