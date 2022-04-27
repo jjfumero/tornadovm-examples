@@ -18,7 +18,7 @@ Similarly, if your device/system does not support SPIRV, do not use the `--spirv
 ```bash
 git clone https://github.com/beehive-lab/tornadovm-installer.git 
 cd tornadovm-installer
-./tornadovmInstaller.sh --jdk8 --opencl --ptx --spirv
+./tornadovmInstaller.sh --jdk17 --opencl --ptx --spirv  ## Choose the ones that applies to your system
 source TornadoVM-OpenJDK8/TornadoVM/source.sh
 ```
 
