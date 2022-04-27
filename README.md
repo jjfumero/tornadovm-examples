@@ -131,3 +131,16 @@ tornado --printKernel --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.ja
 tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --tornado --device=1:1 
 ```
 
+
+### Live Task Migration (Client-Server App)
+
+
+```bash
+## Run Server in one terminal
+./runServer.sh
+
+## Client in another terminal
+./runClient.sh  ## Change device during runtime 
+
+## Note: the application selects the backend 0 (default backend)
+```
