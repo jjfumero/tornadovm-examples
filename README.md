@@ -107,3 +107,27 @@ tornado --threadInfo -Ds0.t0.device=1:1 -cp target/tornadovm-examples-1.0-SNAPSH
 tornado --enableProfiler console --threadInfo -Ds0.t0.device=0:0 -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --tornado
 ```
 
+
+### Blur Filter
+
+This examples shows a blur effect in a photo. Example of computational photography. 
+Place an JPEG image in `/tmp/image.jpg` or feel free to change the path your images. 
+
+
+```bash
+## List all devices and backends available 
+tornado --devices 
+
+## Run the Accelerated Version on the default device 
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --tornado
+
+## Run the Accelerated Version on the default device with info about the accelerator 
+tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --tornado
+
+## Print the generated kernel
+tornado --printKernel --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --tornado
+
+## Run in another device
+tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --tornado --device=1:1 
+```
+
