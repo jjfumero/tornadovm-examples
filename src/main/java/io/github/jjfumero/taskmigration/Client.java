@@ -56,13 +56,12 @@ public class Client {
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 
             while (true) {
-                System.out.print("client: ");
-                String userInput = stdIn.readLine();
-                if ("q".equals(userInput)) {
+                System.out.print("[CLIENT] <Backend:Device> : ");
+                String message = stdIn.readLine();
+                if ("q".equals(message)) {
                     break;
                 }
-                out.println(userInput);
-                // System.out.println("server: " + in.readLine());
+                out.println(message);
             }
 
             out.close();

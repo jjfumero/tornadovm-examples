@@ -29,6 +29,7 @@ import java.util.stream.IntStream;
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.TornadoDriver;
+import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
 public class Server extends Thread {
@@ -81,8 +82,7 @@ public class Server extends Thread {
         InputStream in = null;
         OutputStream out = null;
 
-        TornadoDriver driver = TornadoRuntime.getTornadoRuntime().getDriver(0);
-        final int maxDevices = driver.getDeviceCount();
+        int maxDrivers = TornadoRuntime.getTornadoRuntime().getNumDrivers();
 
         try {
             in = socket.getInputStream();
@@ -90,23 +90,34 @@ public class Server extends Thread {
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String request;
 
-            int deviceNumber;
+            int backendIndex;
+            int deviceIndex;
             while ((request = br.readLine()) != null) {
+                System.out.println("REQUEST: " + request);
                 try {
-                    deviceNumber = Integer.parseInt(request);
+                    String[] message = request.split(":");
+                    backendIndex = Integer.parseInt(message[0]);
+                    deviceIndex = Integer.parseInt(message[1]);
                 } catch (NumberFormatException e) {
-                    deviceNumber = 0;
+                    backendIndex = 0;
+                    deviceIndex = 0;
                 }
 
-                if (deviceNumber >= maxDevices) {
-                    System.out.println("[Warning] max " + maxDevices + " devices");
-                    deviceNumber = maxDevices - 1;
+                // Control for max devices limit
+                if (backendIndex >= maxDrivers) {
+                    backendIndex = 0;
+                    System.out.println("[Warning] max " + maxDrivers + " drivers");
+                    int maxDevices = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDeviceCount();
+                    if (maxDevices >= deviceIndex) {
+                        System.out.println("[Warning] max " + maxDevices + " devices");
+                        deviceIndex = 0;
+                    }
                 }
+                
+                TornadoDevice device = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDevice(deviceIndex);
+                ts.mapAllTo(device);
 
-                //ts.mapAllTo(driver.getDevice(deviceNumber));
-                ts.setDevice(driver.getDevice(deviceNumber));
-
-                System.out.println("Selecting the device: " + deviceNumber);
+                System.out.println("Selecting the device: " + device.getDeviceName());
                 request += '\n';
                 out.write(request.getBytes());
 
