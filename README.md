@@ -5,21 +5,27 @@ It has a JIT compiler, a runtime and several backends to offload, manage memory 
 
 This repository contains a few examples for demonstration purposes. 
 
+Note: Examples using TornadoVM [v0.14-dev](https://github.com/beehive-lab/TornadoVM/releases/tag/v0.13)
+
 ## 1. Build TornadoVM
 
-Run run the examples, first build TornadoVM with both backends (OpenCL and PTX).
-
+To run the examples, first build TornadoVM with any backend (OpenCL, PTX and/or SPIR-V).
 
 **Important:** If you do not have an NVIDIA GPU and CUDA installed, do not use the flag `--ptx` in the following command. 
 TornadoVM builds with the OpenCL backend by default. 
-Similarly, if your device/system does not support SPIRV, do not use the `--spirv` flag. 
+Similarly, if your device/system does not support [SPIR-V](https://www.khronos.org/spir/), do not use the `--spirv` flag. 
 
+To install TornadoVM, it requires as prerequisite:
+1. The driver installed (e.g., NVIDIA + CUDA Driver for NVIDIA GPUs, or oneAPI for Intel platforms). 
+2. [Maven](https://maven.apache.org/download.cgi?Preferred=ftp://ftp.osuosl.org/pub/apache/)
+
+TornadoVM includes an easy installer for Linux: 
 
 ```bash
-git clone https://github.com/beehive-lab/tornadovm-installer.git 
-cd tornadovm-installer
-./tornadovmInstaller.sh --jdk17 --opencl --ptx --spirv  ## Choose the ones that applies to your system
-source TornadoVM-OpenJDK8/TornadoVM/source.sh
+$ git clone https://github.com/beehive-lab/TornadoVM
+$ cd TornadoVM
+$ ./scripts/tornadovmInstaller.sh --jdk17 --opencl --ptx --spirv  ## Choose the ones that applies to your system
+$ source source.sh
 ```
 
 Check installation:
@@ -64,7 +70,7 @@ Tornado device=1:2
 ```
 
 
-Note that, depending on the devices you have and the drivers installed (e.g., NVIDIA CUDA, OpenCL, etc), you will see different implementations. 
+Note that, depending on the devices you have and the drivers installed (e.g., NVIDIA CUDA, OpenCL, SPIR-V), you will see different implementations. 
 
 
 
@@ -73,8 +79,8 @@ Note that, depending on the devices you have and the drivers installed (e.g., NV
 ```bash
 git clone https://github.com/jjfumero/tornadovm-examples
 cd tornadovm-examples
-source /path-to-your-Tornado-DIR/tornadovm-installer/TornadoVM/source.sh
-export TORNADO_SDK=/path-to-your-Tornado-DIR/tornadovm-installer/TornadoVM-OpenJDK8/TornadoVM/bin/sdk
+source /path-to-your-Tornado-DIR/source.sh
+export TORNADO_SDK=/path-to-your-Tornado-DIR/bin/sdk
 mvn clean package
 ```
 
