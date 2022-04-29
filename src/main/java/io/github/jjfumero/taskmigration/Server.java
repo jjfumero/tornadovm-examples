@@ -113,7 +113,7 @@ public class Server extends Thread {
                         deviceIndex = 0;
                     }
                 }
-                
+
                 TornadoDevice device = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDevice(deviceIndex);
                 ts.mapAllTo(device);
 

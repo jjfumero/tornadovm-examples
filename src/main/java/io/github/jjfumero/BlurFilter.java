@@ -77,7 +77,7 @@ public class BlurFilter {
 
     public static final int FILTER_WIDTH = 31;
 
-    private static final String IMAGE_FILE = "/tmp/image.jpg";
+    private static final String IMAGE_FILE = "./image.jpg";
 
     int w;
     int h;

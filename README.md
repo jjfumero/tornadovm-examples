@@ -117,7 +117,7 @@ tornado --enableProfiler console --threadInfo -Ds0.t0.device=0:0 -cp target/torn
 ### Blur Filter
 
 This examples shows a blur effect in a photo. Example of computational photography. 
-Place an JPEG image in `/tmp/image.jpg` or feel free to change the path your images. 
+Place an JPEG image in `./image.jpg` or feel free to change the path your images. 
 
 
 ```bash
