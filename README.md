@@ -124,6 +124,9 @@ Place an JPEG image in `./image.jpg` or feel free to change the path your images
 ## List all devices and backends available 
 tornado --devices 
 
+## Run the Java Parallel Stream Version on CPU for reference 
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --mt 
+
 ## Run the Accelerated Version on the default device 
 tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --tornado
 
