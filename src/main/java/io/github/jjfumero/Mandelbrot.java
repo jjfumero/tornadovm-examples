@@ -35,7 +35,7 @@ import java.util.stream.IntStream;
  * This application is for demonstration purposes to show demos and
  * how to use and run TornadoVM on different platforms.
  *
- * This sample generates an image representing the Mandelbrot fractal. 
+ * This sample generates an image representing the Mandelbrot fractal.
  *
  * How to run?
  *
@@ -153,6 +153,7 @@ public class Mandelbrot {
             mandelbrotImage = new short[size * size];
             if (implementation == Options.Implementation.TORNADO_LOOP) {
                 ts = new TaskSchedule("s0") //
+                        .lockObjectsInMemory( mandelbrotImage)
                         .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
                         .streamOut(mandelbrotImage);
             } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
@@ -163,6 +164,7 @@ public class Mandelbrot {
                 KernelContext context = new KernelContext();
 
                 ts = new TaskSchedule("s0") //
+                        .lockObjectsInMemory(mandelbrotImage)
                         .task("t0", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
                         .streamOut(mandelbrotImage);
             }

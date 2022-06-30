@@ -65,6 +65,7 @@ public class Server extends Thread {
         });
 
         ts = new TaskSchedule("s0") //
+                .lockObjectsInMemory(a, b)
                 .streamIn(a) //
                 .task("t0", Server::vectorAddition, a, b) //
                 .streamOut(b); //
