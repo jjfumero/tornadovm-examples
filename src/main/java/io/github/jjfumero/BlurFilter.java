@@ -99,7 +99,7 @@ public class BlurFilter {
 
             // Tasks using the Loop Parallel API
             parallelFilter = new TaskSchedule("blur") //
-                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, alphaChannel, redFilter,  redFilter, greenFilter, blueFilter, filter)
+                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, alphaChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
                     .task("red", BlurFilter::compute, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("green", BlurFilter::compute, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blue", BlurFilter::compute, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
@@ -121,6 +121,7 @@ public class BlurFilter {
             grid.setWorkerGrid("blur.blue", worker);
 
             parallelFilter = new TaskSchedule("blur") //
+                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, alphaChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
                     .task("red", BlurFilter::computeWithContext, redChannel, redFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("green", BlurFilter::computeWithContext, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("blue", BlurFilter::computeWithContext, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH, context) //
