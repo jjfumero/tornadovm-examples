@@ -15,8 +15,9 @@
  */
 package io.github.jjfumero;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 
 /**
  * Simple example to show how to program and how to invoke TornadoVM kernels to run on a hardware accelerator.
@@ -83,11 +84,11 @@ public class HelloTornado {
 
     public static void main( String[] args ) {
         float[] array = new float[512];
-        TaskSchedule ts = new TaskSchedule("s0")
-                .streamIn(array)
+        TaskGraph taskGraph = new TaskGraph("s0")
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, array)
                 .task("t0", HelloTornado::parallelInitialization, array)
                 .task("t1", HelloTornado::computeSquare, array)
-                .streamOut(array);
-        ts.execute();
+                .transferToHost(array);
+        taskGraph.execute();
     }
 }

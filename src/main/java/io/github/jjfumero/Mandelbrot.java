@@ -18,7 +18,7 @@ package io.github.jjfumero;
 import io.github.jjfumero.common.Options;
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -40,13 +40,13 @@ import java.util.stream.IntStream;
  * How to run?
  *
  * <code>
- *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar -Ds0.t0.device=0:0 io.github.jjfumero.Mandelbrot
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar --jvm="-Ds0.t0.device=0:0" io.github.jjfumero.Mandelbrot
  * </code>
  *
  * How to run on another device?
  *
  * <code>
- *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar -Ds0.t0.device=1:0 io.github.jjfumero.Mandelbrot
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar  --jvm="-Ds0.t0.device=1:0" io.github.jjfumero.Mandelbrot
  * </code>
  *
  */
@@ -142,7 +142,7 @@ public class Mandelbrot {
 
     public static class Benchmark {
         int size = Integer.parseInt(System.getProperty("x", "512"));
-        TaskSchedule ts;
+        TaskGraph ts;
         short[] mandelbrotImage;
         GridScheduler grid;
 
@@ -152,10 +152,10 @@ public class Mandelbrot {
         private  void doSetup() {
             mandelbrotImage = new short[size * size];
             if (implementation == Options.Implementation.TORNADO_LOOP) {
-                ts = new TaskSchedule("s0") //
+                ts = new TaskGraph("s0") //
                         .lockObjectsInMemory( mandelbrotImage)
                         .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
-                        .streamOut(mandelbrotImage);
+                        .transferToHost(mandelbrotImage);
             } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
                 WorkerGrid workerGrid = new WorkerGrid2D(size, size);
                 workerGrid.setLocalWork(16, 16, 1);
@@ -163,10 +163,10 @@ public class Mandelbrot {
                 grid.setWorkerGrid("s0.t0", workerGrid);
                 KernelContext context = new KernelContext();
 
-                ts = new TaskSchedule("s0") //
+                ts = new TaskGraph("s0") //
                         .lockObjectsInMemory(mandelbrotImage)
                         .task("t0", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
-                        .streamOut(mandelbrotImage);
+                        .transferToHost(mandelbrotImage);
             }
         }
 

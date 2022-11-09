@@ -17,10 +17,11 @@ package io.github.jjfumero;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
 import javax.imageio.ImageIO;
@@ -73,7 +74,7 @@ public class BlurFilter {
     private BufferedImage image;
     private Implementation implementation;
 
-    private TaskSchedule parallelFilter;
+    private TaskGraph parallelFilter;
 
     public static final int FILTER_WIDTH = 31;
 
@@ -98,12 +99,13 @@ public class BlurFilter {
         if (implementation == Implementation.TORNADO_LOOP) {
 
             // Tasks using the Loop Parallel API
-            parallelFilter = new TaskSchedule("blur") //
-                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, alphaChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
+            parallelFilter = new TaskGraph("blur") //
+                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
+                    .transferToDevice(DataTransferMode.FIRST_EXECUTION, redChannel, greenChannel, blueChannel, filter) //
                     .task("red", BlurFilter::compute, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("green", BlurFilter::compute, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blue", BlurFilter::compute, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
-                    .streamOut(redFilter, greenFilter, blueFilter);
+                    .transferToHost(redFilter, greenFilter, blueFilter);
 
             // Set the Device using the TornadoVM API
             setDeviceForTaskSchedule(backendIndex, deviceIndex);
@@ -120,12 +122,13 @@ public class BlurFilter {
             grid.setWorkerGrid("blur.green", worker);
             grid.setWorkerGrid("blur.blue", worker);
 
-            parallelFilter = new TaskSchedule("blur") //
+            parallelFilter = new TaskGraph("blur") //
                     .lockObjectsInMemory(redChannel, greenChannel, blueChannel, alphaChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
+                    .transferToDevice(DataTransferMode.FIRST_EXECUTION, redChannel, greenChannel, blueChannel, filter) //
                     .task("red", BlurFilter::computeWithContext, redChannel, redFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("green", BlurFilter::computeWithContext, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("blue", BlurFilter::computeWithContext, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH, context) //
-                    .streamOut(redFilter, greenFilter, blueFilter);
+                    .transferToHost(redFilter, greenFilter, blueFilter);
 
             // Set the Device using the TornadoVM API
             setDeviceForTaskSchedule(backendIndex, deviceIndex);
