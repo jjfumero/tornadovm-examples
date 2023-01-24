@@ -19,9 +19,11 @@ import io.github.jjfumero.common.Options;
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -143,6 +145,8 @@ public class Mandelbrot {
     public static class Benchmark {
         int size = Integer.parseInt(System.getProperty("x", "512"));
         TaskGraph ts;
+
+        TornadoExecutionPlan executionPlan;
         short[] mandelbrotImage;
         GridScheduler grid;
 
@@ -153,9 +157,8 @@ public class Mandelbrot {
             mandelbrotImage = new short[size * size];
             if (implementation == Options.Implementation.TORNADO_LOOP) {
                 ts = new TaskGraph("s0") //
-                        .lockObjectsInMemory( mandelbrotImage)
                         .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
-                        .transferToHost(mandelbrotImage);
+                        .transferToHost(DataTransferMode.EVERY_EXECUTION, mandelbrotImage);
             } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
                 WorkerGrid workerGrid = new WorkerGrid2D(size, size);
                 workerGrid.setLocalWork(16, 16, 1);
@@ -164,10 +167,11 @@ public class Mandelbrot {
                 KernelContext context = new KernelContext();
 
                 ts = new TaskGraph("s0") //
-                        .lockObjectsInMemory(mandelbrotImage)
                         .task("t0", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
-                        .transferToHost(mandelbrotImage);
+                        .transferToHost(DataTransferMode.EVERY_EXECUTION, mandelbrotImage);
             }
+
+            executionPlan = new TornadoExecutionPlan(ts.snapshot());
         }
 
         public Benchmark(Options.Implementation implementation) {
@@ -196,7 +200,7 @@ public class Mandelbrot {
         private void runTornadoVM() {
             for (int i = 0; i< MAX; i++) {
                 long start = System.nanoTime();
-                ts.execute();
+                executionPlan.execute();
                 long end = System.nanoTime();
                 System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
             }
@@ -205,7 +209,7 @@ public class Mandelbrot {
         private void runTornadoVMWithContext() {
             for (int i = 0; i< MAX; i++) {
                 long start = System.nanoTime();
-                ts.execute(grid);
+                executionPlan.withGridScheduler(grid).execute();
                 long end = System.nanoTime();
                 System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
             }

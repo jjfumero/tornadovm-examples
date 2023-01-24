@@ -18,6 +18,7 @@ package io.github.jjfumero;
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
@@ -75,6 +76,7 @@ public class BlurFilter {
     private Implementation implementation;
 
     private TaskGraph parallelFilter;
+    private TornadoExecutionPlan executionPlan;
 
     public static final int FILTER_WIDTH = 31;
 
@@ -100,15 +102,15 @@ public class BlurFilter {
 
             // Tasks using the Loop Parallel API
             parallelFilter = new TaskGraph("blur") //
-                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
                     .transferToDevice(DataTransferMode.FIRST_EXECUTION, redChannel, greenChannel, blueChannel, filter) //
                     .task("red", BlurFilter::compute, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("green", BlurFilter::compute, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blue", BlurFilter::compute, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
-                    .transferToHost(redFilter, greenFilter, blueFilter);
+                    .transferToHost(DataTransferMode.EVERY_EXECUTION, redFilter, greenFilter, blueFilter);
 
-            // Set the Device using the TornadoVM API
-            setDeviceForTaskSchedule(backendIndex, deviceIndex);
+
+            executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
+            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
 
         } else if (implementation == Implementation.TORNADO_KERNEL) {
 
@@ -123,15 +125,14 @@ public class BlurFilter {
             grid.setWorkerGrid("blur.blue", worker);
 
             parallelFilter = new TaskGraph("blur") //
-                    .lockObjectsInMemory(redChannel, greenChannel, blueChannel, alphaChannel, redFilter,  redFilter, greenFilter, blueFilter, filter) //
                     .transferToDevice(DataTransferMode.FIRST_EXECUTION, redChannel, greenChannel, blueChannel, filter) //
                     .task("red", BlurFilter::computeWithContext, redChannel, redFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("green", BlurFilter::computeWithContext, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH, context) //
                     .task("blue", BlurFilter::computeWithContext, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH, context) //
-                    .transferToHost(redFilter, greenFilter, blueFilter);
+                    .transferToHost(DataTransferMode.EVERY_EXECUTION, redFilter, greenFilter, blueFilter);
 
-            // Set the Device using the TornadoVM API
-            setDeviceForTaskSchedule(backendIndex, deviceIndex);
+            executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
+            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
         }
     }
 
@@ -171,12 +172,6 @@ public class BlurFilter {
                 blueChannel[i * h + j] = (rgb & 0xFF);
             }
         }
-    }
-
-    private void setDeviceForTaskSchedule(final int backendIndex, final int deviceIndex) {
-        // Select the device
-        TornadoDevice device = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDevice(deviceIndex);
-        parallelFilter.mapAllTo(device);
     }
 
     private static void channelConvolutionSequential(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth) {
@@ -300,7 +295,7 @@ public class BlurFilter {
     private void runTornadoVM() {
         for (int i = 0; i< MAX_ITERATIONS; i++) {
             long start = System.nanoTime();
-            parallelFilter.execute();
+            executionPlan.execute();
             long end = System.nanoTime();
             System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
         }
@@ -309,7 +304,7 @@ public class BlurFilter {
     private void runTornadoVMWithContext() {
         for (int i = 0; i< MAX_ITERATIONS; i++) {
             long start = System.nanoTime();
-            parallelFilter.execute(grid);
+            executionPlan.withGridScheduler(grid).execute();
             long end = System.nanoTime();
             System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
         }

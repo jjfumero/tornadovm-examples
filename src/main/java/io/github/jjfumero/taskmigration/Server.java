@@ -27,6 +27,7 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
@@ -40,6 +41,7 @@ public class Server extends Thread {
     protected Socket socket;
 
     private TaskGraph taskGraph;
+    private TornadoExecutionPlan executionPlan;
 
     private float[] a;
     private float[] b;
@@ -66,10 +68,10 @@ public class Server extends Thread {
         });
 
         taskGraph = new TaskGraph("s0") //
-                .lockObjectsInMemory(a, b)
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", Server::vectorAddition, a, b) //
-                .transferToHost(b); //
+                .transferToHost(DataTransferMode.EVERY_EXECUTION, b); //
+        executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
         start();
     }
 
@@ -117,13 +119,13 @@ public class Server extends Thread {
                 }
 
                 TornadoDevice device = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDevice(deviceIndex);
-                taskGraph.mapAllTo(device);
+                executionPlan.withDevice(device);
 
                 System.out.println("Selecting the device: " + device.getDeviceName());
                 request += '\n';
                 out.write(request.getBytes());
 
-                taskGraph.execute();
+                executionPlan.execute();
             }
 
         } catch (IOException ex) {

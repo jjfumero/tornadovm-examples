@@ -16,6 +16,7 @@
 package io.github.jjfumero;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 
@@ -88,7 +89,9 @@ public class HelloTornado {
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, array)
                 .task("t0", HelloTornado::parallelInitialization, array)
                 .task("t1", HelloTornado::computeSquare, array)
-                .transferToHost(array);
-        taskGraph.execute();
+                .transferToHost(DataTransferMode.EVERY_EXECUTION, array);
+
+        TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
+        executionPlan.execute();
     }
 }
