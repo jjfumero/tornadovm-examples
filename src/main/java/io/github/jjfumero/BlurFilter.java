@@ -252,8 +252,7 @@ public class BlurFilter {
     private BufferedImage writeFile() {
         setImageFromBuffers();
         try {
-            String tmpDirsLocation = System.getProperty("java.io.tmpdir");
-            File outputFile = new File(tmpDirsLocation + "/blur.jpeg");
+            File outputFile = new File( "./blur.jpeg");
             ImageIO.write(image, "JPEG", outputFile);
         } catch (Exception e) {
             e.printStackTrace();
