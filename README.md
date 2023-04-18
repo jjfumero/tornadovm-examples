@@ -24,7 +24,7 @@ TornadoVM includes an easy installer for Linux:
 ```bash
 $ git clone https://github.com/beehive-lab/TornadoVM
 $ cd TornadoVM
-$ ./scripts/tornadovmInstaller.sh --jdk17 --opencl --ptx --spirv  ## Choose the ones that applies to your system
+$ ./scripts/tornadovm-installer --jdk jdk17 --backend=opencl,ptx,spirv  ## Choose the ones that applies to your system
 $ source source.sh
 ```
 
