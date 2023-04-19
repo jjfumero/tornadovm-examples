@@ -32,7 +32,8 @@ import java.util.HashMap;
 import java.util.stream.IntStream;
 
 /**
- * Example using TornadoVM. This sample computes a blur filter from an JPEG image using different implementations:
+ * Blur-Filter Algorithm taken from CUDA course CS344 from Udacity: {@url https://www.udacity.com/blog/2014/01/update-on-udacity-cs344-intro-to.html}
+ * This sample computes a blur filter from an JPEG image using different implementations:
  *
  * --tornado: it runs with TornadoVM using the Loop Parallel API (using a hardware accelerator)
  * --tornadoContext: it runs with TornadoVM using the Parallel Kernel API (using a hardware accelerator)
