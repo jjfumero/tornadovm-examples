@@ -159,6 +159,7 @@ public class Mandelbrot {
                 ts = new TaskGraph("s0") //
                         .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
                         .transferToHost(DataTransferMode.EVERY_EXECUTION, mandelbrotImage);
+                executionPlan = new TornadoExecutionPlan(ts.snapshot());
             } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
                 WorkerGrid workerGrid = new WorkerGrid2D(size, size);
                 workerGrid.setLocalWork(16, 16, 1);
@@ -169,9 +170,8 @@ public class Mandelbrot {
                 ts = new TaskGraph("s0") //
                         .task("t0", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
                         .transferToHost(DataTransferMode.EVERY_EXECUTION, mandelbrotImage);
+                executionPlan = new TornadoExecutionPlan(ts.snapshot());
             }
-
-            executionPlan = new TornadoExecutionPlan(ts.snapshot());
         }
 
         public Benchmark(Options.Implementation implementation) {
