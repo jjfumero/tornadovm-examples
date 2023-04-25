@@ -33,7 +33,20 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Kmeans
+ * How to run?
+ *
+ * <p>
+ * <code>
+ * tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Kmeans <implementation> <numPoints> <numClusters>
+ * </code>
+ * </p>
+ *
+ * <p>
+ *     Example:
+ * <code>
+ * tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Kmeans tornado 1048576 3
+ * </code>
+ * </p>
  */
 public class KMeans {
 
@@ -233,19 +246,18 @@ public class KMeans {
         return dataPoints;
     }
 
-    private Options.Implementation implementation;
+    private final Options.Implementation implementation;
 
     // Cluster the data points
-    private int k;
+    private final int k;
     private int numDataPoints;
     private Matrix2DInt clusters;
-    private VectorDouble2 dataPoints ;
+    private final VectorDouble2 dataPoints ;
 
     public KMeans(Options.Implementation implementation, int numDataPoints, int k) {
         this.implementation = implementation;
         this.numDataPoints = numDataPoints;
         this.k = k;
-
         // Create Data Set: data points
         dataPoints = createDataPoints(numDataPoints);
     }
@@ -262,9 +274,6 @@ public class KMeans {
                 throw  new TornadoRuntimeException("Not implemented yet");
             case TORNADO_KERNEL:
                 throw  new TornadoRuntimeException("Not implemented yet");
-            default:
-                clusters = kMeansClusteringWithTornadoVM(dataPoints, k);
-                break;
         }
 
         if (PRINT_RESULT) {
