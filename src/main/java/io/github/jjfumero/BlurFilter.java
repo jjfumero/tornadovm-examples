@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Juan Fumero
+ * Copyright 2022-2023 Juan Fumero
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.github.jjfumero;
 
+import io.github.jjfumero.common.Options;
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskGraph;
@@ -28,7 +29,6 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.stream.IntStream;
 
 /**
@@ -53,26 +53,8 @@ public class BlurFilter {
 
     private static final int MAX_ITERATIONS = 10;
 
-    public enum Implementation {
-        SEQUENTIAL,
-        MT,
-        TORNADO_LOOP,
-        TORNADO_KERNEL
-    }
-
-    private static final HashMap<String, Implementation> VALID_OPTIONS = new HashMap<>();
-
-    static {
-        VALID_OPTIONS.put("sequential", Implementation.SEQUENTIAL);
-        VALID_OPTIONS.put("seq", Implementation.SEQUENTIAL);
-        VALID_OPTIONS.put("mt", Implementation.MT);
-        VALID_OPTIONS.put("tornado", Implementation.TORNADO_LOOP);
-        VALID_OPTIONS.put("tornadoContext", Implementation.TORNADO_KERNEL);
-        VALID_OPTIONS.put("tornadocontext", Implementation.TORNADO_KERNEL);
-    }
-
     private BufferedImage image;
-    private Implementation implementation;
+    private Options.Implementation implementation;
 
     private TaskGraph parallelFilter;
     private TornadoExecutionPlan executionPlan;
@@ -93,11 +75,11 @@ public class BlurFilter {
     float[] filter;
     private GridScheduler grid;
 
-    public BlurFilter(Implementation implementation, int backendIndex, int deviceIndex) {
+    public BlurFilter(Options.Implementation implementation, int backendIndex, int deviceIndex) {
         this.implementation = implementation;
         loadImage();
         initData();
-        if (implementation == Implementation.TORNADO_LOOP) {
+        if (implementation == Options.Implementation.TORNADO_LOOP) {
 
             // Tasks using the Loop Parallel API
             parallelFilter = new TaskGraph("blur") //
@@ -111,7 +93,7 @@ public class BlurFilter {
             executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
             executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
 
-        } else if (implementation == Implementation.TORNADO_KERNEL) {
+        } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
 
             // Tasks using the Kernel API
             KernelContext context = new KernelContext();
@@ -333,21 +315,19 @@ public class BlurFilter {
         int backendIndex = 0;
         int deviceIndex = 0;
 
-        if (args.length != 0) {
-            for (String arg : args) {
-                String option = arg.substring(2);
-                if (VALID_OPTIONS.containsKey(option)) {
-                    version = option;
-                }
-                if (option.contains("device=")) {
-                    String dev = option.split("=")[1];
-                    String[] backendDevice = dev.split(":");
-                    backendIndex = Integer.parseInt(backendDevice[0]);
-                    deviceIndex = Integer.parseInt(backendDevice[1]);
-                }
+        for (String arg : args) {
+            if (Options.isValid(arg)) {
+                version = arg;
+            }
+            if (arg.contains("device=")) {
+                String dev = arg.split("=")[1];
+                String[] backendDevice = dev.split(":");
+                backendIndex = Integer.parseInt(backendDevice[0]);
+                deviceIndex = Integer.parseInt(backendDevice[1]);
             }
         }
-        BlurFilter blurFilter = new BlurFilter(VALID_OPTIONS.get(version), backendIndex, deviceIndex);
+
+        BlurFilter blurFilter = new BlurFilter(Options.getImplementation(version), backendIndex, deviceIndex);
         blurFilter.run();
     }
 }

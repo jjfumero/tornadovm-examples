@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Juan Fumero
+ * Copyright 2021, 2023 Juan Fumero
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,7 +257,7 @@ public class Mandelbrot {
     public static void main(String[] args) {
         String version = "tornado";
         if (args.length != 0) {
-            version = args[0].substring(2);
+            version = args[0];
             if (!Options.isValid(version)) {
                 Options.printHelp();
                 System.exit(-1);

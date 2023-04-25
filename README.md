@@ -94,23 +94,23 @@ mvn clean package
 tornado --devices 
 
 ## Run the multi-thread version for reference 
-tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --params="--mt"
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot mt
 
 ## Run the TornadoVM Version (it will select the device 0:0 by default)
-tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --params="--tornado"
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 
 ## Print the device and thread information in which the application is running
-tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --params="--tornado"
+tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 
 ## Get the SPIRV code (assuming the SPIRV backend is installed in the device 0:0)
-tornado --debug --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --params="--tornado"
+tornado --debug --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 spirv-dis <spirv-binary> 
 
 ## Change the device
-tornado --threadInfo --jvm="-Ds0.t0.device=1:1" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --params="--tornado"
+tornado --threadInfo --jvm="-Ds0.t0.device=1:1" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 
 ## Run with the tornadoVM profiler
-tornado --enableProfiler console --threadInfo --jvm="-Ds0.t0.device=0:0" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot --params="--tornado"
+tornado --enableProfiler console --threadInfo --jvm="-Ds0.t0.device=0:0" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 ```
 
 
@@ -125,19 +125,35 @@ Place an JPEG image in `./image.jpg` or feel free to change the path your images
 tornado --devices 
 
 ## Run the Java Parallel Stream Version on CPU for reference 
-tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --params="--mt"
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter mt
 
 ## Run the Accelerated Version on the default device 
-tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --params="--tornado"
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado
 
 ## Run the Accelerated Version on the default device with info about the accelerator 
-tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --params="--tornado"
+tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado
 
 ## Print the generated kernel
-tornado --printKernel --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --params="--tornado"
+tornado --printKernel --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado
 
 ## Run in another device
-tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter --params="--tornado --device=1:1"
+tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado device=1:1
+```
+
+
+### KMeans Clustering
+
+Full KMeans in which the assign-cluster function is expressed with TornadoVM. 
+
+```bash
+
+## Sequential
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans seq 1000000 10
+
+
+# TorandoVM 
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans tornado 1000000 10
+
 ```
 
 

@@ -48,10 +48,10 @@ public final class Options {
 
     public static void printHelp() {
         System.out.println("Option not valid. Use:");
-        System.out.println("\t--tornado: for accelerated version with TornadoVM");
-        System.out.println("\t--tornadoContext: for accelerated version with TornadoVM");
-        System.out.println("\t--seq: for running the sequential version with Java Streams");
-        System.out.println("\t--mt: for running the CPU multi-thread version with Java Parallel Streams");
+        System.out.println("\ttornado: for accelerated version with TornadoVM");
+        System.out.println("\ttornadoContext: for accelerated version with TornadoVM");
+        System.out.println("\tseq: for running the sequential version with Java Streams");
+        System.out.println("\tmt: for running the CPU multi-thread version with Java Parallel Streams");
     }
 
 }
