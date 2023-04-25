@@ -237,7 +237,8 @@ public class KMeans {
 
     private static VectorDouble2 createDataPoints(int numDataPoints) {
         VectorDouble2 dataPoints = new VectorDouble2(numDataPoints);
-        Random r = new Random(System.nanoTime());
+        // Use the same seed for all implementation, to facilitate comparisons
+        Random r = new Random(7);
         for (int i = 0; i < numDataPoints; i++) {
             int pointX = r.nextInt(numDataPoints);
             int pointy = r.nextInt(numDataPoints);
