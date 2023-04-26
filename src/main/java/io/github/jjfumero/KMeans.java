@@ -161,7 +161,7 @@ public class KMeans {
         }
         long end = System.nanoTime();
 
-        System.out.println("Total time: " + (end - start) + " (ms)");
+        System.out.println("Total time: " + (end - start) + " (nanoseconds)");
         return clusters;
     }
 
@@ -197,7 +197,7 @@ public class KMeans {
         }
         long end = System.nanoTime();
 
-        System.out.println("Total time: " + (end - start) + " (ms)");
+        System.out.println("Total time: " + (end - start) + " (nanoseconds)");
         return clusters;
     }
 
