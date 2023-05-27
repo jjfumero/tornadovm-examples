@@ -21,9 +21,9 @@ import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
-import uk.ac.manchester.tornado.api.collections.types.Double2;
+import uk.ac.manchester.tornado.api.collections.types.Float2;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DInt;
-import uk.ac.manchester.tornado.api.collections.types.VectorDouble2;
+import uk.ac.manchester.tornado.api.collections.types.VectorFloat2;
 import uk.ac.manchester.tornado.api.collections.types.VectorInt;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
@@ -55,15 +55,15 @@ public class KMeans {
 
     private static boolean PRINT_RESULT = false;
 
-    public static Double2 calculateCentroid(VectorInt cluster, VectorDouble2 dataPoints, Double2 centroid) {
-        double sumX = 0;
-        double sumY = 0;
+    public static Float2 calculateCentroid(VectorInt cluster, VectorFloat2 dataPoints, Float2 centroid) {
+        float sumX = 0;
+        float sumY = 0;
 
         int numElements = 0;
         for (int i = 0; i < cluster.getLength(); i++) {
             int pointBelongsToCluster = cluster.get(i);
             if (pointBelongsToCluster != INIT_VALUE) {
-                Double2 point = dataPoints.get(pointBelongsToCluster);
+                Float2 point = dataPoints.get(pointBelongsToCluster);
                 sumX += point.getX();
                 sumY += point.getY();
                 numElements++;
@@ -71,33 +71,33 @@ public class KMeans {
         }
 
         if (numElements != 0) {
-            double centerX = sumX / numElements;
-            double centerY = sumY / numElements;
-            return new Double2(centerX, centerY);
+            float centerX = sumX / numElements;
+            float centerY = sumY / numElements;
+            return new Float2(centerX, centerY);
         } else {
             // If there are no elements then we return the original centroid
             return centroid;
         }
     }
 
-    public static double distance(Double2 pointA, Double2 pointB) {
-        double dx = pointA.getX() - pointB.getX();
-        double dy = pointA.getY() - pointB.getY();
+    public static float distance(Float2 pointA, Float2 pointB) {
+        float dx = pointA.getX() - pointB.getX();
+        float dy = pointA.getY() - pointB.getY();
         return TornadoMath.sqrt((dx * dx) + (dy * dy));
     }
 
-    public static boolean isEqual(Double2 pointA, Double2 pointB) {
+    public static boolean isEqual(Float2 pointA, Float2 pointB) {
         return ((pointA.getX() - pointB.getX()) == 0) && ((pointA.getY() - pointB.getY()) == 0);
     }
 
-    private static void assignClusters(VectorDouble2 dataPoints, Matrix2DInt clusters, VectorDouble2 centroid) {
+    private static void assignClusters(VectorFloat2 dataPoints, Matrix2DInt clusters, VectorFloat2 centroid) {
         // Assign data points to clusters
         for (@Parallel int pointIndex = 0; pointIndex < dataPoints.getLength(); pointIndex++) {
-            Double2 point = dataPoints.get(pointIndex);
+            Float2 point = dataPoints.get(pointIndex);
             int closetCluster = INIT_VALUE;
-            double minDistance = Double.MAX_VALUE;
+            float minDistance = Float.MAX_VALUE;
             for (int clusterIndex = 0; clusterIndex < clusters.getNumRows(); clusterIndex++) {
-                double distance = distance(point, centroid.get(clusterIndex));
+                float distance = distance(point, centroid.get(clusterIndex));
                 if (distance < minDistance) {
                     minDistance = distance;
                     closetCluster = clusterIndex;
@@ -107,12 +107,12 @@ public class KMeans {
         }
     }
 
-    private static boolean updateCentroids(VectorDouble2 dataPoints, Matrix2DInt clusters, VectorDouble2 centroid) {
+    private static boolean updateCentroids(VectorFloat2 dataPoints, Matrix2DInt clusters, VectorFloat2 centroid) {
         boolean centroidsChanged = false;
         for (int clusterIndex = 0; clusterIndex < clusters.getNumRows(); clusterIndex++) {
             VectorInt cluster = clusters.row(clusterIndex);
-            Double2 oldCentroid =  centroid.get(clusterIndex);
-            Double2 newCentroid = calculateCentroid(cluster, dataPoints, oldCentroid);
+            Float2 oldCentroid =  centroid.get(clusterIndex);
+            Float2 newCentroid = calculateCentroid(cluster, dataPoints, oldCentroid);
             if (!isEqual(oldCentroid, newCentroid)) {
                 centroid.set(clusterIndex, newCentroid);
                 centroidsChanged = true;
@@ -121,7 +121,7 @@ public class KMeans {
         return centroidsChanged;
     }
 
-    public static Matrix2DInt kMeansClusteringWithTornadoVM(VectorDouble2 dataPoints, final int K) {
+    public static Matrix2DInt kMeansClusteringWithTornadoVM(VectorFloat2 dataPoints, final int K) {
 
         initMatrix = new int[K][dataPoints.getLength()];
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
@@ -131,10 +131,10 @@ public class KMeans {
         Matrix2DInt clusters = new Matrix2DInt(initMatrix);
 
         // Initialize clusters with random centroids
-        VectorDouble2 centroid = new VectorDouble2(K);
+        VectorFloat2 centroid = new VectorFloat2(K);
         int[] rnd = getRandomIndex(dataPoints, K);
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
-            Double2 randomCentroid = dataPoints.get(rnd[clusterIndex]);
+            Float2 randomCentroid = dataPoints.get(rnd[clusterIndex]);
             centroid.set(clusterIndex, randomCentroid);
         }
 
@@ -165,7 +165,7 @@ public class KMeans {
         return clusters;
     }
 
-    public static Matrix2DInt kMeansClusteringSequential(VectorDouble2 dataPoints, final int K) {
+    public static Matrix2DInt kMeansClusteringSequential(VectorFloat2 dataPoints, final int K) {
 
         initMatrix = new int[K][dataPoints.getLength()];
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
@@ -175,10 +175,10 @@ public class KMeans {
         Matrix2DInt clusters = new Matrix2DInt(initMatrix);
 
         // Initialize clusters with random centroids
-        VectorDouble2 centroid = new VectorDouble2(K);
+        VectorFloat2 centroid = new VectorFloat2(K);
         int[] rnd = getRandomIndex(dataPoints, K);
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
-            Double2 randomCentroid = dataPoints.get(rnd[clusterIndex]);
+            Float2 randomCentroid = dataPoints.get(rnd[clusterIndex]);
             centroid.set(clusterIndex, randomCentroid);
         }
 
@@ -201,7 +201,7 @@ public class KMeans {
         return clusters;
     }
 
-    public static int[] getRandomIndex(VectorDouble2 points, int K) {
+    public static int[] getRandomIndex(VectorFloat2 points, int K) {
         Random r = new Random();
         HashSet<Integer> randomValues = new HashSet<>();
         for (int i = 0; i < K; i++) {
@@ -220,7 +220,7 @@ public class KMeans {
         return rnd;
     }
 
-    private static void printClusters(VectorDouble2 dataPoints, Matrix2DInt clusters) {
+    private static void printClusters(VectorFloat2 dataPoints, Matrix2DInt clusters) {
         // Print the clusters
         for (int i = 0; i < clusters.getNumRows(); i++) {
             System.out.println("Cluster " + i + ": ");
@@ -228,21 +228,21 @@ public class KMeans {
             for (int j = 0; j < row.getLength(); j++) {
                 if (row.get(j) != INIT_VALUE) {
                     int index = row.get(j);
-                    Double2 point = dataPoints.get(index);
+                    Float2 point = dataPoints.get(index);
                     System.out.println("    <" + point.getX() + ", " + point.getY() + "> ");
                 }
             }
         }
     }
 
-    private static VectorDouble2 createDataPoints(int numDataPoints) {
-        VectorDouble2 dataPoints = new VectorDouble2(numDataPoints);
+    private static VectorFloat2 createDataPoints(int numDataPoints) {
+        VectorFloat2 dataPoints = new VectorFloat2(numDataPoints);
         // Use the same seed for all implementation, to facilitate comparisons
         Random r = new Random(7);
         for (int i = 0; i < numDataPoints; i++) {
             int pointX = r.nextInt(numDataPoints);
             int pointy = r.nextInt(numDataPoints);
-            dataPoints.set(i, new Double2(pointX, pointy));
+            dataPoints.set(i, new Float2(pointX, pointy));
         }
         return dataPoints;
     }
@@ -253,7 +253,7 @@ public class KMeans {
     private final int k;
     private int numDataPoints;
     private Matrix2DInt clusters;
-    private final VectorDouble2 dataPoints ;
+    private final VectorFloat2 dataPoints ;
 
     public KMeans(Options.Implementation implementation, int numDataPoints, int k) {
         this.implementation = implementation;
