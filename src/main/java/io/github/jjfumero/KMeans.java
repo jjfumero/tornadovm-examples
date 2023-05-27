@@ -130,7 +130,7 @@ public class KMeans {
 
         Matrix2DInt clusters = new Matrix2DInt(initMatrix);
 
-        // Initialize clusters with random centroids
+        // Initialize clusters with random centroids from the input data set.
         VectorFloat2 centroid = new VectorFloat2(K);
         int[] rnd = getRandomIndex(dataPoints, K);
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
@@ -142,7 +142,7 @@ public class KMeans {
                 .transferToDevice(DataTransferMode.FIRST_EXECUTION, clusters, dataPoints) //
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, centroid) //
                 .task("kmeans", KMeans::assignClusters, dataPoints, clusters, centroid) //
-                .transferToHost(DataTransferMode.EVERY_EXECUTION, centroid, clusters);
+                .transferToHost(DataTransferMode.EVERY_EXECUTION, clusters);
 
         ImmutableTaskGraph immutableTaskGraph = taskGraph.snapshot();
         TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
@@ -252,13 +252,11 @@ public class KMeans {
 
     // Cluster the data points
     private final int k;
-    private int numDataPoints;
     private Matrix2DInt clusters;
     private final VectorFloat2 dataPoints ;
 
     public KMeans(Options.Implementation implementation, int numDataPoints, int k) {
         this.implementation = implementation;
-        this.numDataPoints = numDataPoints;
         this.k = k;
         // Create Data Set: data points
         dataPoints = createDataPoints(numDataPoints);
