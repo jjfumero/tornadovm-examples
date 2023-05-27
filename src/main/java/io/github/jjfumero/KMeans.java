@@ -94,16 +94,16 @@ public class KMeans {
         // Assign data points to clusters
         for (@Parallel int pointIndex = 0; pointIndex < dataPoints.getLength(); pointIndex++) {
             Float2 point = dataPoints.get(pointIndex);
-            int closetCluster = INIT_VALUE;
+            int closerCluster = INIT_VALUE;
             float minDistance = Float.MAX_VALUE;
             for (int clusterIndex = 0; clusterIndex < clusters.getNumRows(); clusterIndex++) {
                 float distance = distance(point, centroid.get(clusterIndex));
                 if (distance < minDistance) {
                     minDistance = distance;
-                    closetCluster = clusterIndex;
+                    closerCluster = clusterIndex;
                 }
             }
-            clusters.set(closetCluster, pointIndex, pointIndex);
+            clusters.set(closerCluster, pointIndex, pointIndex);
         }
     }
 
@@ -212,6 +212,7 @@ public class KMeans {
             randomValues.add(valX);
         }
 
+        // Flatten the random values in an array
         int[] rnd = new int[K];
         int i = 0;
         for (Integer val : randomValues) {
