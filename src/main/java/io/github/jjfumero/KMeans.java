@@ -42,8 +42,7 @@ import java.util.Random;
  * </p>
  *
  * <p>
- *     Example:
- * <code>
+ * Example: <code>
  * tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Kmeans tornado 1048576 3
  * </code>
  * </p>
@@ -55,6 +54,19 @@ public class KMeans {
 
     private static boolean PRINT_RESULT = false;
 
+    /**
+     * This method recalculates the centroids. Centroids are calculated using the
+     * average distance of all points that are currently classified into the same
+     * cluster
+     *
+     * @param cluster
+     *            Input set of clusters.
+     * @param dataPoints
+     *            Data Set
+     * @param centroid
+     *            Current set of centroids
+     * @return a new Centroid
+     */
     public static Float2 calculateCentroid(VectorInt cluster, VectorFloat2 dataPoints, Float2 centroid) {
         float sumX = 0;
         float sumY = 0;
@@ -80,16 +92,53 @@ public class KMeans {
         }
     }
 
+    /**
+     * It computes the distance between two points. Points are represented using the
+     * {@link Float2} object type from TornadoVM.
+     * 
+     * @param pointA
+     * @param pointB
+     * @return a float number that represents the distance between the two input
+     *         points.
+     */
     public static float distance(Float2 pointA, Float2 pointB) {
         float dx = pointA.getX() - pointB.getX();
         float dy = pointA.getY() - pointB.getY();
         return TornadoMath.sqrt((dx * dx) + (dy * dy));
     }
 
+    /**
+     * Method that compares when two points are equal.
+     * 
+     * @param pointA
+     * @param pointB
+     * @return returns true if the two input points are equal.
+     */
     public static boolean isEqual(Float2 pointA, Float2 pointB) {
         return ((pointA.getX() - pointB.getX()) == 0) && ((pointA.getY() - pointB.getY()) == 0);
     }
 
+    /**
+     * Main method in the Kmeans clustering. It assigns a cluster number for each
+     * data point.
+     *
+     * <p>
+     * Clusters are represented as a 2D Matrix. The 2D matrix is of size K-Clusters
+     * x Size. Each row from the matrix stores the point index (point ID) that
+     * belongs to each cluster. Row 0 will control cluster 0, row 1 will control
+     * cluster 1, etc.
+     * </p>
+     *
+     * <p>
+     * Each point from the input data set can be assigned to a cluster in parallel.
+     * Thus, if the TornadoVM runtime is presented, then the code will be
+     * automatically parallelized to run with OpenCL, PTX and SPIR-V.
+     * </p>
+     * 
+     * @param dataPoints
+     * @param clusters
+     * @param centroid
+     */
     private static void assignClusters(VectorFloat2 dataPoints, Matrix2DInt clusters, VectorFloat2 centroid) {
         // Assign data points to clusters
         for (@Parallel int pointIndex = 0; pointIndex < dataPoints.getLength(); pointIndex++) {
@@ -107,11 +156,20 @@ public class KMeans {
         }
     }
 
+    /**
+     * Second function for the KMeans algorithm. It updates the centroids after
+     * updating each point to a new cluster.
+     * 
+     * @param dataPoints
+     * @param clusters
+     * @param centroid
+     * @return
+     */
     private static boolean updateCentroids(VectorFloat2 dataPoints, Matrix2DInt clusters, VectorFloat2 centroid) {
         boolean centroidsChanged = false;
         for (int clusterIndex = 0; clusterIndex < clusters.getNumRows(); clusterIndex++) {
             VectorInt cluster = clusters.row(clusterIndex);
-            Float2 oldCentroid =  centroid.get(clusterIndex);
+            Float2 oldCentroid = centroid.get(clusterIndex);
             Float2 newCentroid = calculateCentroid(cluster, dataPoints, oldCentroid);
             if (!isEqual(oldCentroid, newCentroid)) {
                 centroid.set(clusterIndex, newCentroid);
@@ -253,7 +311,7 @@ public class KMeans {
     // Cluster the data points
     private final int k;
     private Matrix2DInt clusters;
-    private final VectorFloat2 dataPoints ;
+    private final VectorFloat2 dataPoints;
 
     public KMeans(Options.Implementation implementation, int numDataPoints, int k) {
         this.implementation = implementation;
@@ -271,9 +329,9 @@ public class KMeans {
                 clusters = kMeansClusteringWithTornadoVM(dataPoints, k);
                 break;
             case MT:
-                throw  new TornadoRuntimeException("Not implemented yet");
+                throw new TornadoRuntimeException("Not implemented yet");
             case TORNADO_KERNEL:
-                throw  new TornadoRuntimeException("Not implemented yet");
+                throw new TornadoRuntimeException("Not implemented yet");
         }
 
         if (PRINT_RESULT) {
