@@ -50,6 +50,8 @@ import java.util.Random;
 public class KMeans {
 
     public static int INIT_VALUE = -1;
+
+    // Matrix used for input data initialization only
     public static int[][] initMatrix;
 
     private static boolean PRINT_RESULT = false;
@@ -73,8 +75,13 @@ public class KMeans {
 
         int numElements = 0;
         for (int i = 0; i < cluster.getLength(); i++) {
+            // Obtain the point that belongs to a cluster
             int pointBelongsToCluster = cluster.get(i);
+            // If the point is not the Init value, means that the point was assigned to a
+            // cluster
             if (pointBelongsToCluster != INIT_VALUE) {
+                // In this case, we obtain the point coordinates (x,y) and accumulate their
+                // values to compute the average in the next step.
                 Float2 point = dataPoints.get(pointBelongsToCluster);
                 sumX += point.getX();
                 sumY += point.getY();
@@ -146,12 +153,16 @@ public class KMeans {
             int closerCluster = INIT_VALUE;
             float minDistance = Float.MAX_VALUE;
             for (int clusterIndex = 0; clusterIndex < clusters.getNumRows(); clusterIndex++) {
+                // Compute the distance between the current point and the centroid that was
+                // assigned to the input data point.
                 float distance = distance(point, centroid.get(clusterIndex));
                 if (distance < minDistance) {
                     minDistance = distance;
                     closerCluster = clusterIndex;
                 }
             }
+            // If it founds a closer cluster, then we assign that cluster to the data point
+            // being observed.
             clusters.set(closerCluster, pointIndex, pointIndex);
         }
     }
@@ -181,39 +192,53 @@ public class KMeans {
 
     public static Matrix2DInt kMeansClusteringWithTornadoVM(VectorFloat2 dataPoints, final int K) {
 
+        // 1. Data initialization
+
+        // 1.1 Assign an INIT_VALUE for all columns per cluster
+        // [ cluster0 ] [ InitVal, InitVal, ... InitVal ]
+        // [ cluster1 ] [ InitVal, InitVal, ... InitVal ]
         initMatrix = new int[K][dataPoints.getLength()];
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
             Arrays.fill(initMatrix[clusterIndex], INIT_VALUE);
         }
 
+        // 1.2 Create a Matrix2D int type using the initMatrix
         Matrix2DInt clusters = new Matrix2DInt(initMatrix);
 
-        // Initialize clusters with random centroids from the input data set.
+        // 1.3 Initialize clusters with random centroids from the input data set.
         VectorFloat2 centroid = new VectorFloat2(K);
+        // Create an array with random points from the input data set
         int[] rnd = getRandomIndex(dataPoints, K);
+        // Assign different the random point as a centroid for the initialization
         for (int clusterIndex = 0; clusterIndex < K; clusterIndex++) {
             Float2 randomCentroid = dataPoints.get(rnd[clusterIndex]);
             centroid.set(clusterIndex, randomCentroid);
         }
 
+        // 2. Create a Task-Graph for the assign cluster method
         TaskGraph taskGraph = new TaskGraph("clustering") //
                 .transferToDevice(DataTransferMode.FIRST_EXECUTION, clusters, dataPoints) //
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, centroid) //
                 .task("kmeans", KMeans::assignClusters, dataPoints, clusters, centroid) //
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, clusters);
 
+        // 3. Create an execution plan
         ImmutableTaskGraph immutableTaskGraph = taskGraph.snapshot();
         TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
 
         long start = System.nanoTime();
         executionPlan.execute();
 
-        // Recalculate centroids of clusters
+        // 4. KMeans Clustering Algorithm
+        // 4.1 Recalculate centroids of clusters while the centroids list change between
+        // iterations.
         boolean centroidsChanged = true;
         while (centroidsChanged) {
+            // Recalculate centroids. The following method is executed on a CPU (without
+            // TornadoVM). s
             centroidsChanged = updateCentroids(dataPoints, clusters, centroid);
             if (centroidsChanged) {
-                // Reassign data points to clusters
+                // If there are new changes, then we reassign clusters
                 executionPlan.execute();
             }
         }
