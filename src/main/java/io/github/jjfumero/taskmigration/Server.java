@@ -40,20 +40,10 @@ public class Server extends Thread {
 
     protected Socket socket;
 
-    private TaskGraph taskGraph;
-    private TornadoExecutionPlan executionPlan;
+    private final TornadoExecutionPlan executionPlan;
 
     private float[] a;
     private float[] b;
-
-    private static void initializeDeviceHeapAllDevices() {
-        for (int i = 0; i < TornadoRuntime.getTornadoRuntime().getNumDrivers(); i++) {
-            final TornadoDriver driver = TornadoRuntime.getTornadoRuntime().getDriver(i);
-            for (int j = 0; j < driver.getDeviceCount(); j++) {
-                driver.getDevice(j).reset();
-            }
-        }
-    }
 
     private Server(Socket socket) {
         this.socket = socket;
@@ -67,7 +57,10 @@ public class Server extends Thread {
             a[idx] = r.nextFloat();
         });
 
-        taskGraph = new TaskGraph("s0") //
+        //
+        //
+        //
+        TaskGraph taskGraph = new TaskGraph("s0") //
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", Server::vectorAddition, a, b) //
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, b); //
