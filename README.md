@@ -151,9 +151,8 @@ Full KMeans in which the assign-cluster function is expressed with TornadoVM.
 tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans seq 1000000 10
 
 
-# TorandoVM 
+# TornadoVM version 
 tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans tornado 1000000 10
-
 ```
 
 
@@ -167,5 +166,11 @@ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans
 ## Client in another terminal
 ./runClient.sh  ## Change device during runtime 
 
-## Note: the application selects the backend 0 (default backend)
+## Note: the application selects the backend 0:0 (default backend)
+
+# type different <backend:deviceNumber> version from the client. 
+# Examples:
+# 0:1 
+# 1:0 
+## etc
 ```
