@@ -146,6 +146,8 @@ tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jj
 Full KMeans in which the assign-cluster function is expressed with TornadoVM. 
 
 ```bash
+# For example use 1000000 data points and classify them into 10 clusters.
+# Points are selected randomly. This is just for quick experiments 
 
 ## Sequential
 tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans seq 1000000 10
