@@ -138,6 +138,9 @@ tornado --printKernel --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.ja
 
 ## Run in another device
 tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado device=1:1
+
+## Run with concurrent multi-devices
+tornado --threadInfo --enableConcurrentDevices --jvm=" -Dblur.red.device=1:0 -Dblur.green.device=2:0 -Dblur.blue.device=1:2" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado
 ```
 
 

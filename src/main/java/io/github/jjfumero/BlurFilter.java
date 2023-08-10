@@ -91,7 +91,7 @@ public class BlurFilter {
 
 
             executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
-            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
+            //executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
 
         } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
 
