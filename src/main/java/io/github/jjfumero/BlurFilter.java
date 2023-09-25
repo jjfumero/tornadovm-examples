@@ -22,7 +22,9 @@ import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -89,9 +91,15 @@ public class BlurFilter {
                     .task("blue", BlurFilter::compute, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
                     .transferToHost(DataTransferMode.EVERY_EXECUTION, redFilter, greenFilter, blueFilter);
 
-
             executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
-            //executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
+            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
+
+            // Extended API - Work for TornadoVM 0.16 API
+//            TornadoDevice device0 = TornadoRuntime.getTornadoRuntime().getDriver(0).getDevice(0);
+//            executionPlan.withConcurrentDevices() //
+//                    .withDevice("blur.red", device0) //
+//                    .withDevice("blur.green", device0) //
+//                    .withDevice("blur.blue", device0);
 
         } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
 
@@ -156,7 +164,6 @@ public class BlurFilter {
     }
 
     private static void channelConvolutionSequential(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth) {
-        assert (filterWidth % 2 == 1);
         for (int r = 0; r < numRows; r++) {
             for (int c = 0; c < numCols; c++) {
                 float result = 0.0f;
@@ -175,7 +182,6 @@ public class BlurFilter {
     }
 
     private static void compute(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth) {
-        assert (filterWidth % 2 == 1);
         for (@Parallel int r = 0; r < numRows; r++) {
             for (@Parallel int c = 0; c < numCols; c++) {
                 float result = 0.0f;
@@ -194,7 +200,6 @@ public class BlurFilter {
     }
 
     private static void computeWithContext(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth, KernelContext context) {
-        assert (filterWidth % 2 == 1);
         int r = context.globalIdx;
         int c = context.globalIdy;
         float result = 0.0f;
