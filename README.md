@@ -28,7 +28,7 @@ $ ./bin/tornadovm-installer --jdk jdk21 --backend=opencl,ptx,spirv
 $ source setvars.sh
 ```
 
-Check installation:
+### Check installation:
 
 ```bash
 tornado --devices
