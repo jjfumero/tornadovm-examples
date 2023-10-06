@@ -17,6 +17,7 @@ package io.github.jjfumero;
 
 import io.github.jjfumero.common.Options;
 import uk.ac.manchester.tornado.api.GridScheduler;
+import uk.ac.manchester.tornado.api.ImmutableTaskGraph;
 import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
@@ -91,8 +92,11 @@ public class BlurFilter {
                     .task("blue", BlurFilter::compute, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
                     .transferToHost(DataTransferMode.EVERY_EXECUTION, redFilter, greenFilter, blueFilter);
 
-            executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
-            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
+            ImmutableTaskGraph immutableTaskGraph = parallelFilter.snapshot();
+            executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
+
+            TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
+            executionPlan.withDevice(device);
 
             // Extended API - Work for TornadoVM 0.16 API
 //            TornadoDevice device0 = TornadoRuntime.getTornadoRuntime().getDriver(0).getDevice(0);
