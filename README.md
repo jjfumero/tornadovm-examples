@@ -1,7 +1,7 @@
-## Examples for TornadoVM 
+## TornadoVM Examples
 
 [TornadoVM](https://github.com/beehive-lab/TornadoVM) is a Java library for hardware acceleration of Java and JVM applications. 
-It has a JIT compiler, a runtime and several backends to offload, manage memory and run applications on GPUs, FPGAs, and multi-core CPUs in a transparent manner. 
+It has a JIT compiler, a runtime system, and several backends that offload, manage memory and handle execution on GPUs, FPGAs, and multicore CPUs transparently. 
 
 This repository contains a few examples for demonstration purposes. 
 
@@ -11,20 +11,20 @@ Note: Examples using TornadoVM [v0.16-dev](https://github.com/beehive-lab/Tornad
 
 To run the examples, first build TornadoVM with any backend (OpenCL, PTX and/or SPIR-V).
 
-**Important:** If you do not have an NVIDIA GPU and CUDA installed, do not use the flag `--ptx` in the following command. 
-TornadoVM builds with the OpenCL backend by default. 
+**Important:** If you do not have an NVIDIA GPU and the CUDA SDK installed, do not use the flag `--ptx` in the following command. 
 Similarly, if your device/system does not support [SPIR-V](https://www.khronos.org/spir/), do not use the `--spirv` flag. 
 
 To install TornadoVM, it requires as prerequisite:
 1. The driver installed (e.g., NVIDIA + CUDA Driver for NVIDIA GPUs, or oneAPI for Intel platforms). 
 2. [Maven](https://maven.apache.org/download.cgi?Preferred=ftp://ftp.osuosl.org/pub/apache/)
 
-TornadoVM includes an easy installer for Linux: 
+TornadoVM includes an easy installer script for Linux and OSx: 
 
 ```bash
 $ git clone https://github.com/beehive-lab/TornadoVM
 $ cd TornadoVM
-$ ./bin/tornadovm-installer --jdk jdk21 --backend=opencl,ptx,spirv  ## Choose the ones that applies to your system
+## Choose the backend/s that applies to your system. You can install multiple ones
+$ ./bin/tornadovm-installer --jdk jdk21 --backend=opencl,ptx,spirv  
 $ source setvars.sh
 ```
 
