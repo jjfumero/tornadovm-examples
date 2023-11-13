@@ -25,7 +25,8 @@ import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
+import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
+import uk.ac.manchester.tornado.api.types.arrays.IntArray;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -68,14 +69,14 @@ public class BlurFilter {
 
     int w;
     int h;
-    int[] redChannel;
-    int[] greenChannel;
-    int[] blueChannel;
-    int[] alphaChannel;
-    int[] redFilter;
-    int[] greenFilter;
-    int[] blueFilter;
-    float[] filter;
+    IntArray redChannel;
+    IntArray greenChannel;
+    IntArray blueChannel;
+    IntArray alphaChannel;
+    IntArray redFilter;
+    IntArray greenFilter;
+    IntArray blueFilter;
+    FloatArray filter;
     private GridScheduler grid;
 
     public BlurFilter(Options.Implementation implementation, int backendIndex, int deviceIndex) {
@@ -141,33 +142,33 @@ public class BlurFilter {
         w = image.getWidth();
         h = image.getHeight();
 
-        redChannel = new int[w * h];
-        greenChannel = new int[w * h];
-        blueChannel = new int[w * h];
-        alphaChannel = new int[w * h];
+        redChannel = new IntArray(w * h);
+        greenChannel = new IntArray(w * h);
+        blueChannel = new IntArray(w * h);
+        alphaChannel = new IntArray(w * h);
 
-        redFilter = new int[w * h];
-        greenFilter = new int[w * h];
-        blueFilter = new int[w * h];
+        redFilter = new IntArray(w * h);
+        greenFilter = new IntArray(w * h);
+        blueFilter = new IntArray(w * h);
 
-        filter = new float[w * h];
+        filter = new FloatArray(w * h);
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                filter[i * h + j] = 1.f / (FILTER_WIDTH * FILTER_WIDTH);
+                filter.set(i * h + j,  1.f / (FILTER_WIDTH * FILTER_WIDTH));
             }
         }
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 int rgb = image.getRGB(i, j);
-                alphaChannel[i * h + j] = (rgb >> 24) & 0xFF;
-                redChannel[i * h + j] = (rgb >> 16) & 0xFF;
-                greenChannel[i * h + j] = (rgb >> 8) & 0xFF;
-                blueChannel[i * h + j] = (rgb & 0xFF);
+                alphaChannel.set(i * h + j,  (rgb >> 24) & 0xFF);
+                redChannel.set(i * h + j,  (rgb >> 16) & 0xFF);
+                greenChannel.set(i * h + j,  (rgb >> 8) & 0xFF);
+                blueChannel.set(i * h + j,  (rgb & 0xFF));
             }
         }
     }
 
-    private static void channelConvolutionSequential(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth) {
+    private static void channelConvolutionSequential(IntArray channel, IntArray channelBlurred, final int numRows, final int numCols, FloatArray filter, final int filterWidth) {
         for (int r = 0; r < numRows; r++) {
             for (int c = 0; c < numCols; c++) {
                 float result = 0.0f;
@@ -175,17 +176,18 @@ public class BlurFilter {
                     for (int filter_c = -filterWidth / 2; filter_c <= filterWidth / 2; filter_c++) {
                         int image_r = Math.min(Math.max(r + filter_r, 0), (numRows - 1));
                         int image_c = Math.min(Math.max(c + filter_c, 0), (numCols - 1));
-                        float image_value = (channel[image_r * numCols + image_c]);
-                        float filter_value = filter[(filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2];
+                        float image_value = channel.get(image_r * numCols + image_c);
+                        float filter_value = filter.get((filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2);
                         result += image_value * filter_value;
                     }
                 }
-                channelBlurred[r * numCols + c] = result > 255 ? 255 : (int) result;
+                int finalValue = result > 255 ? 255 : (int) result;
+                channelBlurred.set(r * numCols + c, finalValue);
             }
         }
     }
 
-    private static void compute(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth) {
+    private static void compute(IntArray channel, IntArray channelBlurred, final int numRows, final int numCols, FloatArray filter, final int filterWidth) {
         for (@Parallel int r = 0; r < numRows; r++) {
             for (@Parallel int c = 0; c < numCols; c++) {
                 float result = 0.0f;
@@ -193,17 +195,18 @@ public class BlurFilter {
                     for (int filter_c = -filterWidth / 2; filter_c <= filterWidth / 2; filter_c++) {
                         int image_r = Math.min(Math.max(r + filter_r, 0), (numRows - 1));
                         int image_c = Math.min(Math.max(c + filter_c, 0), (numCols - 1));
-                        float image_value = (channel[image_r * numCols + image_c]);
-                        float filter_value = filter[(filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2];
+                        float image_value = channel.get(image_r * numCols + image_c);
+                        float filter_value = filter.get((filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2);
                         result += image_value * filter_value;
                     }
                 }
-                channelBlurred[r * numCols + c] = result > 255 ? 255 : (int) result;
+                int finalValue = result > 255 ? 255 : (int) result;
+                channelBlurred.set(r * numCols + c, finalValue);
             }
         }
     }
 
-    private static void computeWithContext(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth, KernelContext context) {
+    private static void computeWithContext(IntArray channel, IntArray channelBlurred, final int numRows, final int numCols, FloatArray filter, final int filterWidth, KernelContext context) {
         int r = context.globalIdx;
         int c = context.globalIdy;
         float result = 0.0f;
@@ -211,15 +214,16 @@ public class BlurFilter {
             for (int filter_c = -filterWidth / 2; filter_c <= filterWidth / 2; filter_c++) {
                 int image_r = Math.min(Math.max(r + filter_r, 0), (numRows - 1));
                 int image_c = Math.min(Math.max(c + filter_c, 0), (numCols - 1));
-                float image_value = (channel[image_r * numCols + image_c]);
-                float filter_value = filter[(filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2];
+                float image_value = channel.get(image_r * numCols + image_c);
+                float filter_value = filter.get((filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2);
                 result += image_value * filter_value;
             }
         }
-        channelBlurred[r * numCols + c] = result > 255 ? 255 : (int) result;
+        int finalValue = result > 255 ? 255 : (int) result;
+        channelBlurred.set(r * numCols + c, finalValue);
     }
 
-    private static void computeWithParallelStreams(int[] channel, int[] channelBlurred, final int numRows, final int numCols, float[] filter, final int filterWidth) {
+    private static void computeWithParallelStreams(IntArray channel, IntArray channelBlurred, final int numRows, final int numCols, FloatArray filter, final int filterWidth) {
         // For every pixel in the image
         assert (filterWidth % 2 == 1);
         IntStream.range(0, numRows).parallel().forEach(r -> {
@@ -229,12 +233,13 @@ public class BlurFilter {
                     for (int filter_c = -filterWidth / 2; filter_c <= filterWidth / 2; filter_c++) {
                         int image_r = Math.min(Math.max(r + filter_r, 0), (numRows - 1));
                         int image_c = Math.min(Math.max(c + filter_c, 0), (numCols - 1));
-                        float image_value = (channel[image_r * numCols + image_c]);
-                        float filter_value = filter[(filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2];
+                        float image_value = channel.get(image_r * numCols + image_c);
+                        float filter_value = filter.get((filter_r + filterWidth / 2) * filterWidth + filter_c + filterWidth / 2);
                         result += image_value * filter_value;
                     }
                 }
-                channelBlurred[r * numCols + c] = result > 255 ? 255 : (int) result;
+                int finalValue = result > 255 ? 255 : (int) result;
+                channelBlurred.set(r * numCols + c, finalValue);
             });
         });
     }
@@ -253,7 +258,7 @@ public class BlurFilter {
     private void setImageFromBuffers() {
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                Color c = new Color(redFilter[i * h + j], greenFilter[i * h + j], blueFilter[i * h + j], alphaChannel[i * h + j]);
+                Color c = new Color(redFilter.get(i * h + j), greenFilter.get(i * h + j), blueFilter.get(i * h + j), alphaChannel.get(i * h + j));
                 image.setRGB(i, j, c.getRGB());
             }
         }

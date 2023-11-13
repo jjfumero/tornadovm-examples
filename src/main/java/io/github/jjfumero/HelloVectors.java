@@ -18,10 +18,10 @@ package io.github.jjfumero;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
-import uk.ac.manchester.tornado.api.collections.types.Float4;
-import uk.ac.manchester.tornado.api.collections.types.VectorFloat4;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.api.types.collections.VectorFloat4;
+import uk.ac.manchester.tornado.api.types.vectors.Float4;
 
 /**
  * tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.HelloVectors
@@ -53,11 +53,14 @@ public class HelloVectors {
         TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
 
         // Obtain a device from the list
-        TornadoDevice device = TornadoExecutionPlan.getDevice(0, 0);
+        TornadoDevice device = TornadoExecutionPlan.getDevice(0, 2);
         executionPlan.withDevice(device);
 
-        // Execute the application
-        executionPlan.execute();
+        // Put in a loop to analyze hotspots with Intel VTune (as a demo)
+        for (int i = 0; i < 2000; i++ ) {
+            // Execute the application
+            executionPlan.execute();
+        }
 
     }
 }

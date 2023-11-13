@@ -29,10 +29,10 @@ import java.util.stream.IntStream;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
-import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
+import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 
 public class Server extends Thread {
 
@@ -42,24 +42,21 @@ public class Server extends Thread {
 
     private final TornadoExecutionPlan executionPlan;
 
-    private float[] a;
-    private float[] b;
+    private FloatArray a;
+    private FloatArray b;
 
     private Server(Socket socket) {
         this.socket = socket;
         System.out.println("New client connected from " + socket.getInetAddress().getHostAddress());
 
-        a = new float[256];
-        b = new float[256];
+        a = new FloatArray(256);
+        b = new FloatArray(256);
 
         Random r = new Random();
-        IntStream.range(0, a.length).parallel().forEach(idx -> {
-            a[idx] = r.nextFloat();
+        IntStream.range(0, a.getSize()).parallel().forEach(idx -> {
+            a.set(idx, r.nextFloat());
         });
 
-        //
-        //
-        //
         TaskGraph taskGraph = new TaskGraph("s0") //
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", Server::vectorAddition, a, b) //
@@ -68,9 +65,10 @@ public class Server extends Thread {
         start();
     }
 
-    private static void vectorAddition(final float[] a, final float[] b) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            b[i] = a[i] + a[i];
+    private static void vectorAddition(final FloatArray a, final FloatArray b) {
+        for (@Parallel int i = 0; i < a.getSize(); i++) {
+            float value = a.get(i);
+            b.set(i, value + value);
         }
     }
 

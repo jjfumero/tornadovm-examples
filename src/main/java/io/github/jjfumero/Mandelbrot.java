@@ -24,6 +24,7 @@ import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -56,7 +57,7 @@ public class Mandelbrot {
 
     private static final int MAX = 100;
 
-    public static void mandelbrotFractal(int size, short[] output) {
+    public static void mandelbrotFractal(int size, ShortArray output) {
         final int iterations = 10000;
         float space = 2.0f / size;
 
@@ -81,12 +82,12 @@ public class Mandelbrot {
                     }
                 }
                 short r = (short) ((y * 255) / iterations);
-                output[i * size + j] = r;
+                output.set((i * size + j),   r);
             }
         }
     }
 
-    public static void mandelbrotFractalWithParallelStreams(int size, short[] output) {
+    public static void mandelbrotFractalWithParallelStreams(int size, ShortArray output) {
         final int iterations = 10000;
         float space = 2.0f / size;
         IntStream.range(0, size).parallel().forEach(i -> {
@@ -110,12 +111,12 @@ public class Mandelbrot {
                     }
                 }
                 short r = (short) ((y * 255) / iterations);
-                output[i * size + j] = r;
+                output.set((i * size + j),   r);
             });
         });
     }
 
-    public static void mandelbrotFractalWithContext(int size, short[] output, KernelContext context) {
+    public static void mandelbrotFractalWithContext(int size, ShortArray output, KernelContext context) {
         final int iterations = 10000;
         float space = 2.0f / size;
         int i = context.globalIdx;
@@ -139,7 +140,7 @@ public class Mandelbrot {
             }
         }
         short r = (short) ((y * 255) / iterations);
-        output[i * size + j] = r;
+        output.set((i * size + j),   r);
     }
 
     public static class Benchmark {
@@ -147,14 +148,14 @@ public class Mandelbrot {
         TaskGraph ts;
 
         TornadoExecutionPlan executionPlan;
-        short[] mandelbrotImage;
+        ShortArray mandelbrotImage;
         GridScheduler grid;
 
         private Options.Implementation implementation;
 
 
         private  void doSetup() {
-            mandelbrotImage = new short[size * size];
+            mandelbrotImage = new ShortArray(size * size);
             if (implementation == Options.Implementation.TORNADO_LOOP) {
                 ts = new TaskGraph("s0") //
                         .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
@@ -222,7 +223,7 @@ public class Mandelbrot {
                 File outputFile = new File("/tmp/mandelbrot.png");
                 for (int i = 0; i < size; i++) {
                     for (int j = 0; j < size; j++) {
-                        int colour = mandelbrotImage[(i * size + j)];
+                        int colour = mandelbrotImage.get(i * size + j);
                         write.setSample(i, j, 0, colour);
                     }
                 }

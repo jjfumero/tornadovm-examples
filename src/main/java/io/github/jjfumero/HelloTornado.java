@@ -19,6 +19,7 @@ import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 
 /**
  * Simple example to show how to program and how to invoke TornadoVM kernels to run on a hardware accelerator.
@@ -71,20 +72,21 @@ import uk.ac.manchester.tornado.api.enums.DataTransferMode;
  */
 public class HelloTornado {
 
-    public static void parallelInitialization(float[] data) {
-        for (@Parallel int i = 0; i < data.length; i++) {
-            data[i] = i;
+    public static void parallelInitialization(FloatArray data) {
+        for (@Parallel int i = 0; i < data.getSize(); i++) {
+            data.set(i, i);
         }
     }
 
-    public static void computeSquare(float[] data) {
-        for (@Parallel int i = 0; i < data.length; i++) {
-            data[i] = data[i] * data[i];
+    public static void computeSquare(FloatArray data) {
+        for (@Parallel int i = 0; i < data.getSize(); i++) {
+            float value = data.get(i);
+            data.set(i,  value * value);
         }
     }
 
     public static void main( String[] args ) {
-        float[] array = new float[512];
+        FloatArray array = new FloatArray(512);
         TaskGraph taskGraph = new TaskGraph("s0")
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, array)
                 .task("t0", HelloTornado::parallelInitialization, array)

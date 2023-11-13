@@ -20,13 +20,13 @@ import uk.ac.manchester.tornado.api.ImmutableTaskGraph;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
-import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
-import uk.ac.manchester.tornado.api.collections.types.Float2;
-import uk.ac.manchester.tornado.api.collections.types.Matrix2DInt;
-import uk.ac.manchester.tornado.api.collections.types.VectorFloat2;
-import uk.ac.manchester.tornado.api.collections.types.VectorInt;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+import uk.ac.manchester.tornado.api.math.TornadoMath;
+import uk.ac.manchester.tornado.api.types.collections.VectorFloat2;
+import uk.ac.manchester.tornado.api.types.collections.VectorInt;
+import uk.ac.manchester.tornado.api.types.matrix.Matrix2DInt;
+import uk.ac.manchester.tornado.api.types.vectors.Float2;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -102,7 +102,7 @@ public class KMeans {
     /**
      * It computes the distance between two points. Points are represented using the
      * {@link Float2} object type from TornadoVM.
-     * 
+     *
      * @param pointA
      * @param pointB
      * @return a float number that represents the distance between the two input
@@ -116,7 +116,7 @@ public class KMeans {
 
     /**
      * Method that compares when two points are equal.
-     * 
+     *
      * @param pointA
      * @param pointB
      * @return returns true if the two input points are equal.
@@ -141,7 +141,7 @@ public class KMeans {
      * Thus, if the TornadoVM runtime is presented, then the code will be
      * automatically parallelized to run with OpenCL, PTX and SPIR-V.
      * </p>
-     * 
+     *
      * @param dataPoints
      * @param clusters
      * @param centroid
@@ -170,7 +170,7 @@ public class KMeans {
     /**
      * Second function for the KMeans algorithm. It updates the centroids after
      * updating each point to a new cluster.
-     * 
+     *
      * @param dataPoints
      * @param clusters
      * @param centroid
