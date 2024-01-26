@@ -61,7 +61,5 @@ public class HelloVectors {
             // Execute the application
             executionPlan.execute();
         }
-
-
     }
 }
