@@ -21,6 +21,7 @@ import uk.ac.manchester.tornado.api.TornadoExecutionResult;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
+import uk.ac.manchester.tornado.api.math.TornadoMath;
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 
 /**
@@ -88,7 +89,7 @@ public class HelloTornado {
     public static void computeSquare(FloatArray data) {
         for (@Parallel int i = 0; i < data.getSize(); i++) {
             float value = data.get(i);
-            data.set(i, value * value);
+            data.set(i, TornadoMath.pow(value, 2));
         }
     }
 
@@ -111,7 +112,6 @@ public class HelloTornado {
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, array);
 
         TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
-        executionPlan.withProfiler(ProfilerMode.SILENT);
 
         for (int i = 0; i < 1000; i++) {
             TornadoExecutionResult executionResult = executionPlan.execute();
