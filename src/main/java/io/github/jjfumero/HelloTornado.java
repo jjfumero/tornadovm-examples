@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Juan Fumero
+ * Copyright 2021-2024 Juan Fumero
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package io.github.jjfumero;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
+import uk.ac.manchester.tornado.api.TornadoExecutionResult;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 
 /**
@@ -72,6 +74,11 @@ import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
  */
 public class HelloTornado {
 
+    /**
+     * Set this flag to True if you want to run the sequential code
+     */
+    private static boolean RUN_SEQUENTIAL = false;
+
     public static void parallelInitialization(FloatArray data) {
         for (@Parallel int i = 0; i < data.getSize(); i++) {
             data.set(i, i);
@@ -81,12 +88,22 @@ public class HelloTornado {
     public static void computeSquare(FloatArray data) {
         for (@Parallel int i = 0; i < data.getSize(); i++) {
             float value = data.get(i);
-            data.set(i,  value * value);
+            data.set(i, value * value);
+        }
+    }
+
+    public static void runSequential(FloatArray array) {
+        for (int i = 0; i < 1000; i++) {
+            long start = System.nanoTime();
+            parallelInitialization(array);
+            computeSquare(array);
+            long end = System.nanoTime();
+            System.out.println("Total time (ns): " + (end - start));
         }
     }
 
     public static void main(String[] args ) {
-        FloatArray array = new FloatArray(512);
+        FloatArray array = new FloatArray(1024 * 1024);
         TaskGraph taskGraph = new TaskGraph("s0")
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, array)
                 .task("t0", HelloTornado::parallelInitialization, array)
@@ -94,6 +111,15 @@ public class HelloTornado {
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, array);
 
         TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
-        executionPlan.execute();
+        executionPlan.withProfiler(ProfilerMode.SILENT);
+
+        for (int i = 0; i < 1000; i++) {
+            TornadoExecutionResult executionResult = executionPlan.execute();
+            System.out.println("Total time (ns): " + executionResult.getProfilerResult().getTotalTime());
+        }
+
+        if (RUN_SEQUENTIAL) {
+            runSequential(array);
+        }
     }
 }

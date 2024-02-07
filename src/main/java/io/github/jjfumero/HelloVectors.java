@@ -46,7 +46,7 @@ public class HelloVectors {
     }
 
     public static void main( String[] args ) {
-        VectorFloat8 array = new VectorFloat8(64);
+        VectorFloat8 array = new VectorFloat8(1024 * 128);
         TaskGraph taskGraph = new TaskGraph("s0")
                 .transferToDevice(DataTransferMode.EVERY_EXECUTION, array)
                 .task("t0", HelloVectors::parallelInitialization, array)
@@ -60,7 +60,7 @@ public class HelloVectors {
         executionPlan.withDevice(device);
 
         // Put in a loop to analyze hotspots with Intel VTune (as a demo)
-        for (int i = 0; i < 2000; i++ ) {
+        for (int i = 0; i < 1000; i++ ) {
             // Execute the application
             executionPlan.execute();
         }
