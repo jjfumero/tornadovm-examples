@@ -15,10 +15,13 @@
  */
 package io.github.jjfumero;
 
+import uk.ac.manchester.tornado.api.DRMode;
+import uk.ac.manchester.tornado.api.Policy;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.TornadoExecutionResult;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.math.TornadoMath;
@@ -45,32 +48,10 @@ import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
  *   $ tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.HelloTornado
  * </code>
  *
- * Sample output:
- * <code>
- *  Task info: s0.t0
- * 	Backend           : OpenCL
- * 	Device            : NVIDIA GeForce RTX 2060 with Max-Q Design CL_DEVICE_TYPE_GPU (available)
- * 	Dims              : 1
- * 	Global work offset: [0]
- * 	Global work size  : [512]
- * 	Local  work size  : [512, 1, 1]
- * 	Number of workgroups  : [1]
- *
- * Task info: s0.t1
- * 	Backend           : OpenCL
- * 	Device            : NVIDIA GeForce RTX 2060 with Max-Q Design CL_DEVICE_TYPE_GPU (available)
- * 	Dims              : 1
- * 	Global work offset: [0]
- * 	Global work size  : [512]
- * 	Local  work size  : [512, 1, 1]
- * 	Number of workgroups  : [1]
- * </code>
- *
- * Run with the profiler:
+ * Enable the profiler from the command line:
  * <code>
  *   $ tornado --enableProfiler console --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.HelloTornado
  * </code>
- *
  *
  */
 public class HelloTornado {
@@ -82,14 +63,14 @@ public class HelloTornado {
 
     public static void parallelInitialization(FloatArray data) {
         for (@Parallel int i = 0; i < data.getSize(); i++) {
-            data.set(i, i);
+            data.set(i, i * 2);
         }
     }
 
-    public static void computeSquare(FloatArray data) {
+    public static void computeSqrt(FloatArray data) {
         for (@Parallel int i = 0; i < data.getSize(); i++) {
             float value = data.get(i);
-            data.set(i, TornadoMath.pow(value, 2));
+            data.set(i, TornadoMath.sqrt(value));
         }
     }
 
@@ -97,26 +78,59 @@ public class HelloTornado {
         for (int i = 0; i < 1000; i++) {
             long start = System.nanoTime();
             parallelInitialization(array);
-            computeSquare(array);
+            computeSqrt(array);
             long end = System.nanoTime();
             System.out.println("Total time (ns): " + (end - start));
         }
     }
 
     public static void main(String[] args ) {
-        FloatArray array = new FloatArray(1024 * 1024);
+        // ~512MB of input data
+        FloatArray array = new FloatArray(1024 * 1024 * 128);
         TaskGraph taskGraph = new TaskGraph("s0")
-                .transferToDevice(DataTransferMode.EVERY_EXECUTION, array)
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, array)
                 .task("t0", HelloTornado::parallelInitialization, array)
-                .task("t1", HelloTornado::computeSquare, array)
+                .task("t1", HelloTornado::computeSqrt, array)
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, array);
 
         TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
 
-        for (int i = 0; i < 1000; i++) {
-            TornadoExecutionResult executionResult = executionPlan.execute();
-            System.out.println("Total time (ns): " + executionResult.getProfilerResult().getTotalTime());
-        }
+        // 1. Execute the task-graph
+        executionPlan.execute();
+
+        // 2. Enable the Profiler
+        TornadoExecutionResult executionResult = executionPlan.withProfiler(ProfilerMode.SILENT)
+                .execute();
+        // 2.1 Query the profiler
+        // Example: Get the GPU Kernel time in nanoseconds:
+        System.out.println("Kernel Time in ns: " + executionResult.getProfilerResult().getDeviceKernelTime());
+
+        // 3. Disable the Profiler and run again
+        executionPlan.withoutProfiler()
+                .execute();
+
+        // 4. Change device (We assume we have at least 2 devices for the driver 0):
+        TornadoDevice device = TornadoExecutionPlan.getDevice(0, 1);
+        executionPlan.withDevice(device)
+                .withProfiler(ProfilerMode.CONSOLE)  // It will dump a JSON entry every time the kernel is executed
+                .execute();
+
+        // 5. Enable warmup
+        executionPlan.withWarmUp()
+                .withoutProfiler()
+                .execute();
+
+        // Reset execution
+        executionPlan.freeDeviceMemory();
+        executionPlan.resetDevice();
+
+        // 6. Enable Dynamic Reconfiguration
+        System.out.println("Evaluating Dynamic Reconfiguration");
+        executionPlan.withDynamicReconfiguration(Policy.PERFORMANCE, DRMode.PARALLEL)
+                .execute();
+
+        // Run again to see which device was selected after the dynamic reconfiguration
+        executionPlan.execute();
 
         if (RUN_SEQUENTIAL) {
             runSequential(array);
