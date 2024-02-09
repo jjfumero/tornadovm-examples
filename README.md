@@ -5,7 +5,7 @@ It has a JIT compiler, a runtime system, and several backends that offload, mana
 
 This repository contains a few examples for demonstration purposes. 
 
-Note: Examples using TornadoVM [v1.0.1-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
+Note: Examples using TornadoVM [v1.0.2-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
 
 ## 1. Build TornadoVM
 
