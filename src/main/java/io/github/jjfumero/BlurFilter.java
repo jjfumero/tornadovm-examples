@@ -25,6 +25,7 @@ import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 import uk.ac.manchester.tornado.api.types.arrays.IntArray;
 
@@ -108,16 +109,21 @@ public class BlurFilter {
 
             ImmutableTaskGraph immutableTaskGraph = parallelFilter.snapshot();
             executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
-
-            // Extended API - Work for TornadoVM v1.0 API
-            TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);
-            TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);
-            TornadoDevice device2 = TornadoExecutionPlan.getDevice(2, 0);
-            
-            executionPlan.withConcurrentDevices() //
-                    .withDevice("blur.red", device0) //
-                    .withDevice("blur.green", device1) //
-                    .withDevice("blur.blue", device2);
+            if (TornadoRuntime.getTornadoRuntime().getNumDrivers() == 1) {
+                TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
+                executionPlan.withDevice(device);
+            } else {
+                // Extended API - Work for TornadoVM v1.0 API
+                // This assumes TornadoVM is installed for all SPIR-V, PTX and OpenCL backends.
+                // This call will not work otherwise
+                TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);
+                TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);
+                TornadoDevice device2 = TornadoExecutionPlan.getDevice(2, 0);
+                executionPlan.withConcurrentDevices() //
+                        .withDevice("blur.red", device0) //
+                        .withDevice("blur.green", device1) //
+                        .withDevice("blur.blue", device2);
+            }
 
         } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
 
