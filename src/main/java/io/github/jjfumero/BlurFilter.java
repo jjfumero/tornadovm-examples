@@ -98,7 +98,6 @@ public class BlurFilter {
         loadImage();
         initData();
         if (implementation == Options.Implementation.TORNADO_LOOP) {
-
             // Tasks using the Loop Parallel API
             parallelFilter = new TaskGraph("blur") //
                     .transferToDevice(DataTransferMode.FIRST_EXECUTION, redChannel, greenChannel, blueChannel, filter) //
@@ -145,7 +144,7 @@ public class BlurFilter {
                     .transferToHost(DataTransferMode.EVERY_EXECUTION, redFilter, greenFilter, blueFilter);
 
             executionPlan = new TornadoExecutionPlan(parallelFilter.snapshot());
-            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex));
+            executionPlan.withDevice(TornadoExecutionPlan.getDevice(backendIndex, deviceIndex)).withGridScheduler(grid);
         }
     }
 
@@ -317,7 +316,7 @@ public class BlurFilter {
     private void runTornadoVMWithContext() {
         for (int i = 0; i< MAX_ITERATIONS; i++) {
             long start = System.nanoTime();
-            executionPlan.withGridScheduler(grid).execute();
+            executionPlan.execute();
             long end = System.nanoTime();
             System.out.println(STR."Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
