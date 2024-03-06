@@ -80,7 +80,7 @@ public class HelloTornado {
             parallelInitialization(array);
             computeSqrt(array);
             long end = System.nanoTime();
-            System.out.println("Total time (ns): " + (end - start));
+            System.out.println(STR."Total time (ns): \{end - start}");
         }
     }
 

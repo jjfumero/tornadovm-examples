@@ -39,10 +39,10 @@ import java.util.stream.IntStream;
  * Blur-Filter Algorithm taken from CUDA course CS344 from Udacity: {@url https://www.udacity.com/blog/2014/01/update-on-udacity-cs344-intro-to.html}
  * This sample computes a blur filter from an JPEG image using different implementations:
  *
- * --tornado: it runs with TornadoVM using the Loop Parallel API (using a hardware accelerator)
- * --tornadoContext: it runs with TornadoVM using the Parallel Kernel API (using a hardware accelerator)
- * --mt: it runs with JDK 8 Streams (multi-threaded version without TornadoVM)
- * --seq: it runs sequentially (no acceleration)
+ * `tornado`: it runs with TornadoVM using the Loop Parallel API (using a hardware accelerator)
+ * `tornadoContext`: it runs with TornadoVM using the Parallel Kernel API (using a hardware accelerator)
+ * `mt`: it runs with JDK 8 Streams (multi-threaded version without TornadoVM)
+ * `seq`: it runs sequentially (no acceleration)
  *
  * Device Selection from command line:
  *
@@ -51,6 +51,19 @@ import java.util.stream.IntStream;
  * To obtain the complete list of devices that TornadoVM can see:
  *
  * $ tornado --devices
+ *
+ * Example of how to run:
+ *
+ * a) Enabling TornadoVM
+ * <code>
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado
+ * </code>
+ *
+ * b) Running with the Java Streams version
+ *
+ * <code>
+ *     tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter mt
+ * </code>
  *
  */
 public class BlurFilter {
@@ -96,15 +109,15 @@ public class BlurFilter {
             ImmutableTaskGraph immutableTaskGraph = parallelFilter.snapshot();
             executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
 
-            TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
-            executionPlan.withDevice(device);
-
-            // Extended API - Work for TornadoVM 0.16 API
-//            TornadoDevice device0 = TornadoRuntime.getTornadoRuntime().getDriver(0).getDevice(0);
-//            executionPlan.withConcurrentDevices() //
-//                    .withDevice("blur.red", device0) //
-//                    .withDevice("blur.green", device0) //
-//                    .withDevice("blur.blue", device0);
+            // Extended API - Work for TornadoVM v1.0 API
+            TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);
+            TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);
+            TornadoDevice device2 = TornadoExecutionPlan.getDevice(2, 0);
+            
+            executionPlan.withConcurrentDevices() //
+                    .withDevice("blur.red", device0) //
+                    .withDevice("blur.green", device1) //
+                    .withDevice("blur.blue", device2);
 
         } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
 
@@ -271,7 +284,7 @@ public class BlurFilter {
             channelConvolutionSequential(greenChannel, greenFilter, w, h, filter, FILTER_WIDTH);
             channelConvolutionSequential(blueChannel, blueFilter, w, h, filter, FILTER_WIDTH);
             long end = System.nanoTime();
-            System.out.println("Sequential Total time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+            System.out.println(STR."Sequential Total time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
     }
 
@@ -282,7 +295,7 @@ public class BlurFilter {
             computeWithParallelStreams(greenChannel, greenFilter, w, h, filter, FILTER_WIDTH);
             computeWithParallelStreams(blueChannel, blueFilter, w, h, filter, FILTER_WIDTH);
             long end = System.nanoTime();
-            System.out.println("Streams Total time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+            System.out.println(STR."Streams Total time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
     }
 
@@ -291,7 +304,7 @@ public class BlurFilter {
             long start = System.nanoTime();
             executionPlan.execute();
             long end = System.nanoTime();
-            System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+            System.out.println(STR."Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
     }
 
@@ -300,7 +313,7 @@ public class BlurFilter {
             long start = System.nanoTime();
             executionPlan.withGridScheduler(grid).execute();
             long end = System.nanoTime();
-            System.out.println("Total Time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+            System.out.println(STR."Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
     }
 
