@@ -79,7 +79,7 @@ public class BlurFilter {
 
     public static final int FILTER_WIDTH = 31;
 
-    private static final String IMAGE_FILE = "./image.jpg";
+    private static final String IMAGE_FILE = "./images/image.jpg";
 
     int w;
     int h;
@@ -108,21 +108,10 @@ public class BlurFilter {
 
             ImmutableTaskGraph immutableTaskGraph = parallelFilter.snapshot();
             executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
-            if (TornadoRuntime.getTornadoRuntime().getNumDrivers() == 1) {
-                TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
-                executionPlan.withDevice(device);
-            } else {
-                // Extended API - Work for TornadoVM v1.0 API
-                // This assumes TornadoVM is installed for all SPIR-V, PTX and OpenCL backends.
-                // This call will not work otherwise
-                TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);
-                TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);
-                TornadoDevice device2 = TornadoExecutionPlan.getDevice(2, 0);
-                executionPlan.withConcurrentDevices() //
-                        .withDevice("blur.red", device0) //
-                        .withDevice("blur.green", device1) //
-                        .withDevice("blur.blue", device2);
-            }
+
+            // Select the device
+            TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
+            executionPlan.withDevice(device);
 
         } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
 

@@ -143,6 +143,108 @@ tornado --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jj
 tornado --threadInfo --enableConcurrentDevices --jvm=" -Dblur.red.device=1:0 -Dblur.green.device=2:0 -Dblur.blue.device=1:2" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter tornado
 ```
 
+### Multi-Image Processing
+
+Demonstration of a Task-Graph to compute:
+  - Black and White filter
+  - Blur Filer 
+
+using multiple GPUs (or accelerators) at the same time for each task.
+
+```bash
+## Run the Java Parallel Stream Version on CPU for reference 
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.MultiImageProcessor mt
+
+## Run the Accelerated Version on the default device 
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.MultiImageProcessor tornado
+```
+
+The examples is created based on the following device setup:
+
+
+```bash
+## List all devices and backends available 
+$ tornado --devices 
+
+Number of Tornado drivers: 3
+Driver: SPIRV
+  Total number of SPIRV devices  : 1
+  Tornado device=0:0  (DEFAULT)
+	SPIRV -- SPIRV LevelZero - Intel(R) UHD Graphics 770
+		Global Memory Size: 24.9 GB
+		Local Memory Size: 64.0 KB
+		Workgroup Dimensions: 3
+		Total Number of Block Threads: [512]
+		Max WorkGroup Configuration: [512, 512, 512]
+		Device OpenCL C version:  (LEVEL ZERO) 1.3
+
+Driver: OpenCL
+  Total number of OpenCL devices  : 4
+  Tornado device=1:0
+	OPENCL --  [NVIDIA CUDA] -- NVIDIA GeForce RTX 3070
+		Global Memory Size: 7.8 GB
+		Local Memory Size: 48.0 KB
+		Workgroup Dimensions: 3
+		Total Number of Block Threads: [1024]
+		Max WorkGroup Configuration: [1024, 1024, 64]
+		Device OpenCL C version: OpenCL C 1.2
+
+  Tornado device=1:1
+	OPENCL --  [Intel(R) OpenCL Graphics] -- Intel(R) UHD Graphics 770
+		Global Memory Size: 24.9 GB
+		Local Memory Size: 64.0 KB
+		Workgroup Dimensions: 3
+		Total Number of Block Threads: [512]
+		Max WorkGroup Configuration: [512, 512, 512]
+		Device OpenCL C version: OpenCL C 1.2
+
+  Tornado device=1:2
+	OPENCL --  [Intel(R) OpenCL] -- 12th Gen Intel(R) Core(TM) i7-12700K
+		Global Memory Size: 31.1 GB
+		Local Memory Size: 32.0 KB
+		Workgroup Dimensions: 3
+		Total Number of Block Threads: [8192]
+		Max WorkGroup Configuration: [8192, 8192, 8192]
+		Device OpenCL C version: OpenCL C 3.0
+
+  Tornado device=1:3
+	OPENCL --  [Intel(R) FPGA Emulation Platform for OpenCL(TM)] -- Intel(R) FPGA Emulation Device
+		Global Memory Size: 31.1 GB
+		Local Memory Size: 256.0 KB
+		Workgroup Dimensions: 3
+		Total Number of Block Threads: [67108864]
+		Max WorkGroup Configuration: [67108864, 67108864, 67108864]
+		Device OpenCL C version: OpenCL C 1.2
+
+Driver: PTX
+  Total number of PTX devices  : 1
+  Tornado device=2:0
+	PTX -- PTX -- NVIDIA GeForce RTX 3070
+		Global Memory Size: 7.8 GB
+		Local Memory Size: 48.0 KB
+		Workgroup Dimensions: 3
+		Total Number of Block Threads: [2147483647, 65535, 65535]
+		Max WorkGroup Configuration: [1024, 1024, 64]
+		Device OpenCL C version: N/A
+```
+
+To change the accelerator, use the following instructions:
+
+
+```java
+TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);
+TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);
+TornadoDevice device2 = TornadoExecutionPlan.getDevice(1, 1);
+TornadoDevice device3 = TornadoExecutionPlan.getDevice(1, 2);
+TornadoDevice device4 = TornadoExecutionPlan.getDevice(2, 0);
+
+executionPlan.withConcurrentDevices() //
+	.withDevice("imageProcessor.blackAndWhite", device0) //
+	.withDevice("imageProcessor.blurRed", device1) //
+	.withDevice("imageProcessor.blurGreen", device2) //
+	.withDevice("imageProcessor.blurBlue", device4);
+```
+
 
 ### KMeans Clustering
 
