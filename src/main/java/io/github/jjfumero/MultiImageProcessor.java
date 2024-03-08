@@ -67,7 +67,7 @@ import java.util.stream.IntStream;
  */
 public class MultiImageProcessor {
 
-    private static final int MAX_ITERATIONS = 10;
+    private static final int MAX_ITERATIONS = 100;
 
     private BufferedImage image;
 
@@ -80,7 +80,7 @@ public class MultiImageProcessor {
 
     public static final int FILTER_WIDTH = 31;
 
-    private static final String IMAGE_FILE = "./images/image.jpg";
+    private static final String IMAGE_FILE = "./images/noria.jpg";
 
     int w;
     int h;
@@ -113,7 +113,7 @@ public class MultiImageProcessor {
                 TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
                 executionPlan.withDevice(device);
             } else {
-                // Extended API - Work for TornadoVM v1.0 API
+                // FromTornadoVM v1.0 API
                 // This assumes TornadoVM is installed for all SPIR-V, PTX and OpenCL backends.
                 // This call will not work otherwise
                 TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);  // spir-v
@@ -122,7 +122,7 @@ public class MultiImageProcessor {
                 TornadoDevice device3 = TornadoExecutionPlan.getDevice(1, 2);  // opencl 2
                 TornadoDevice device4 = TornadoExecutionPlan.getDevice(2, 0);  // ptx
                 executionPlan.withConcurrentDevices() //
-                        .withDevice("imageProcessor.blackAndWhite", device1) //
+                        .withDevice("imageProcessor.blackAndWhite", device0) //
                         .withDevice("imageProcessor.blurRed", device1) //
                         .withDevice("imageProcessor.blurGreen", device1) //
                         .withDevice("imageProcessor.blurBlue", device1);
