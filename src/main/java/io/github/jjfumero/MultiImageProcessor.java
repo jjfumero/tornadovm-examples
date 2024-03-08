@@ -16,7 +16,6 @@
 package io.github.jjfumero;
 
 import io.github.jjfumero.common.Options;
-import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.ImmutableTaskGraph;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
@@ -28,13 +27,30 @@ import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 import uk.ac.manchester.tornado.api.types.arrays.IntArray;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.stream.IntStream;
 
 /**
+ * Example of Multi-Backend with Concurrent Execution on Multiple-Devices. For this example to run, it requires TornadoVM
+ * to be configured with multiple backends. For example:
+ *
+ * <code>
+ *     cd <$TORNADOVM_ROOT>
+ *     make BACKEND=spirv,opencl,ptx
+ * </code>
+ *
+ * This example takes an input JPEG image and generates two images: one with a blur effect, and another one in black and white.
+ * Processing this in TornadoVM can be done with a Task-Graph of 4 tasks. One task to process the Black and White, and another
+ * three tasks to process a blur effect of an image colour. The colured image can be decomposed in channels (Red, Blue, Green),
+ * and each channel can be processed independently using a different task.
+ *
+ * Thus, all tasks are fully independent and developers can enable the TornadoVM execution plan to process them concurrently
+ * with different devices, even with different backends.
+ *
+ *
  * Example of how to run:
  *
  * a) Enabling TornadoVM
@@ -76,7 +92,6 @@ public class MultiImageProcessor {
     IntArray greenFilter;
     IntArray blueFilter;
     FloatArray filter;
-    private GridScheduler grid;
 
     public MultiImageProcessor(Options.Implementation implementation, int backendIndex, int deviceIndex) {
         this.implementation = implementation;
