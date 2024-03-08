@@ -93,9 +93,9 @@ public class Server extends Thread {
             while ((request = br.readLine()) != null) {
                 System.out.println(STR."REQUEST: \{request}");
                 try {
-                    String[] message = request.split(":");
-                    backendIndex = Integer.parseInt(message[0]);
-                    deviceIndex = Integer.parseInt(message[1]);
+                    String[] clientDeviceSelection = request.split(":");
+                    backendIndex = Integer.parseInt(clientDeviceSelection[0]);
+                    deviceIndex = Integer.parseInt(clientDeviceSelection[1]);
                 } catch (NumberFormatException e) {
                     backendIndex = 0;
                     deviceIndex = 0;
@@ -112,10 +112,10 @@ public class Server extends Thread {
                     }
                 }
 
-                TornadoDevice device = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDevice(deviceIndex);
+                TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
                 executionPlan.withDevice(device);
 
-                System.out.println(STR."Selecting the device: \{device.getDeviceName()}");
+                System.out.println(STR."Selecting the device: \{device.getPhysicalDevice().getDeviceName()}");
                 request += '\n';
                 out.write(request.getBytes());
 
