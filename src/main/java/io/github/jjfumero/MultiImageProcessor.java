@@ -100,7 +100,7 @@ public class MultiImageProcessor {
         if (implementation == Options.Implementation.TORNADO_LOOP) {
             // Tasks using the Loop Parallel API
             parallelFilter = new TaskGraph("imageProcessor") //
-                    .transferToDevice(DataTransferMode.FIRST_EXECUTION, imageRGB, redChannel, greenChannel, blueChannel, filter) //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, imageRGB, redChannel, greenChannel, blueChannel, filter) //
                     .task("blackAndWhite", MultiImageProcessor::blackAndWhiteTransform, imageRGB, w, h) //
                     .task("blurRed", MultiImageProcessor::compute, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blurGreen", MultiImageProcessor::compute, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
