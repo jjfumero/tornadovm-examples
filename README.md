@@ -7,6 +7,20 @@ This repository contains a few examples for demonstration purposes.
 
 Note: Examples using TornadoVM [v1.0.3-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
 
+
+Outline:
+
+| Topic                       | Link                                                                                                            |
+|:----------------------------|:---------------------------------------------------------------------------------------------------------------:|
+| Install TornadoVM           | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#1-build-tornadovm)                     |
+| Setup the examples          | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#2-setup-the-examples)                  |
+| Mandelbrot demo             | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#mandelbrot)                            |
+| Blur Filter demo            | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#blur-filter)                           |
+| Multi-Image Processing demo | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#multi-image-processing)                |
+| KMeans Clustering demo      | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#kmeans-clustering)                     |
+| Live Task Migration demo    | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#live-task-migration-client-server-app) |
+
+
 ## 1. Build TornadoVM
 
 To run the examples, first build TornadoVM with any backend (OpenCL, PTX and/or SPIR-V).
