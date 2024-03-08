@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Juan Fumero
+ * Copyright 2022, 2024, Juan Fumero
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,15 @@ import java.net.UnknownHostException;
 
 public class Client {
 
-    private static final String HOST_MACHINE = "127.0.0.1";
-
     public static void main(String args[]) {
-        String host = HOST_MACHINE;
+        String serverIP = Server.SERVER_IP;
         int port = Server.PORT_NUMBER;
-        new Client(host, port);
+        new Client(serverIP, port);
     }
 
     public Client(String host, int port) {
         try {
-            System.out.println("Connecting to host " + host + " on port " + port + ".");
+            System.out.println(STR."Connecting to host \{host} on port \{port}.");
 
             Socket echoSocket = null;
             PrintWriter out = null;
@@ -46,7 +44,7 @@ public class Client {
                 out = new PrintWriter(echoSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
             } catch (UnknownHostException e) {
-                System.err.println("Unknown host: " + host);
+                System.err.println(STR."Unknown host: \{host}");
                 System.exit(1);
             } catch (IOException e) {
                 System.err.println("Unable to get streams from server");

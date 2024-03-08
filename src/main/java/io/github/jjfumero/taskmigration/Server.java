@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Juan Fumero
+ * Copyright 2022, 2024 Juan Fumero
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ public class Server extends Thread {
 
     public static final int PORT_NUMBER = 8081;
 
+    public static final String SERVER_IP = "127.0.0.1";
+
+
     protected Socket socket;
 
     private final TornadoExecutionPlan executionPlan;
@@ -47,7 +50,7 @@ public class Server extends Thread {
 
     private Server(Socket socket) {
         this.socket = socket;
-        System.out.println("New client connected from " + socket.getInetAddress().getHostAddress());
+        System.out.println(STR."New client connected from \{socket.getInetAddress().getHostAddress()}");
 
         a = new FloatArray(256);
         b = new FloatArray(256);
@@ -88,7 +91,7 @@ public class Server extends Thread {
             int backendIndex;
             int deviceIndex;
             while ((request = br.readLine()) != null) {
-                System.out.println("REQUEST: " + request);
+                System.out.println(STR."REQUEST: \{request}");
                 try {
                     String[] message = request.split(":");
                     backendIndex = Integer.parseInt(message[0]);
@@ -101,10 +104,10 @@ public class Server extends Thread {
                 // Control for max devices limit
                 if (backendIndex >= maxDrivers) {
                     backendIndex = 0;
-                    System.out.println("[Warning] max " + maxDrivers + " drivers");
+                    System.out.println(STR."[Warning] max \{maxDrivers} drivers");
                     int maxDevices = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDeviceCount();
                     if (maxDevices >= deviceIndex) {
-                        System.out.println("[Warning] max " + maxDevices + " devices");
+                        System.out.println(STR."[Warning] max \{maxDevices} devices");
                         deviceIndex = 0;
                     }
                 }
@@ -112,7 +115,7 @@ public class Server extends Thread {
                 TornadoDevice device = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDevice(deviceIndex);
                 executionPlan.withDevice(device);
 
-                System.out.println("Selecting the device: " + device.getDeviceName());
+                System.out.println(STR."Selecting the device: \{device.getDeviceName()}");
                 request += '\n';
                 out.write(request.getBytes());
 
