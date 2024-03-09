@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
  *
  * This example takes an input JPEG image and generates two images: one with a blur effect, and another one in black and white.
  * Processing this in TornadoVM can be done with a Task-Graph of 4 tasks. One task to process the Black and White, and another
- * three tasks to process a blur effect of an image colour. The colured image can be decomposed in channels (Red, Blue, Green),
+ * three tasks to process a blur effect of an image colour. The coloured image can be decomposed in channels (Red, Blue, Green),
  * and each channel can be processed independently using a different task.
  *
  * Thus, all tasks are fully independent and developers can enable the TornadoVM execution plan to process them concurrently
@@ -122,7 +122,7 @@ public class MultiImageProcessor {
                 TornadoDevice device3 = TornadoExecutionPlan.getDevice(1, 2);  // opencl 2
                 TornadoDevice device4 = TornadoExecutionPlan.getDevice(2, 0);  // ptx
                 executionPlan.withConcurrentDevices() //
-                        .withDevice("imageProcessor.blackAndWhite", device0) //
+                        .withDevice("imageProcessor.blackAndWhite", device1) //
                         .withDevice("imageProcessor.blurRed", device1) //
                         .withDevice("imageProcessor.blurGreen", device1) //
                         .withDevice("imageProcessor.blurBlue", device1);
