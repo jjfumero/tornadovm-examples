@@ -25,7 +25,7 @@ import java.net.UnknownHostException;
 
 public class Client {
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         String serverIP = Server.SERVER_IP;
         int port = Server.PORT_NUMBER;
         new Client(serverIP, port);
@@ -40,7 +40,7 @@ public class Client {
             BufferedReader in = null;
 
             try {
-                echoSocket = new Socket(host, 8081);
+                echoSocket = new Socket(host, Server.PORT_NUMBER);
                 out = new PrintWriter(echoSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
             } catch (UnknownHostException e) {

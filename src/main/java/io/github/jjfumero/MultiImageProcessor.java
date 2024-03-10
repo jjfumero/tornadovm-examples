@@ -67,13 +67,13 @@ import java.util.stream.IntStream;
  */
 public class MultiImageProcessor {
 
-    private static final int MAX_ITERATIONS = 100;
+    private static final int MAX_ITERATIONS = 3;
 
     private BufferedImage image;
 
     IntArray imageRGB;
 
-    private Options.Implementation implementation;
+    private final Options.Implementation implementation;
 
     private TaskGraph parallelFilter;
     private TornadoExecutionPlan executionPlan;
@@ -109,24 +109,21 @@ public class MultiImageProcessor {
 
             ImmutableTaskGraph immutableTaskGraph = parallelFilter.snapshot();
             executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
-            if (TornadoRuntime.getTornadoRuntime().getNumDrivers() == 1) {
-                TornadoDevice device = TornadoExecutionPlan.getDevice(backendIndex, deviceIndex);
-                executionPlan.withDevice(device);
-            } else {
-                // FromTornadoVM v1.0 API
-                // This assumes TornadoVM is installed for all SPIR-V, PTX and OpenCL backends.
-                // This call will not work otherwise
-                TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);  // spir-v
-                TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);  // opencl 0
-                TornadoDevice device2 = TornadoExecutionPlan.getDevice(1, 1);  // opencl 1
-                TornadoDevice device3 = TornadoExecutionPlan.getDevice(1, 2);  // opencl 2
-                TornadoDevice device4 = TornadoExecutionPlan.getDevice(2, 0);  // ptx
-                executionPlan.withConcurrentDevices() //
-                        .withDevice("imageProcessor.blackAndWhite", device1) //
-                        .withDevice("imageProcessor.blurRed", device1) //
-                        .withDevice("imageProcessor.blurGreen", device1) //
-                        .withDevice("imageProcessor.blurBlue", device1);
-            }
+
+            // From TornadoVM v1.0 API
+            // This assumes TornadoVM is installed for all SPIR-V, PTX and OpenCL backends.
+            // This call will not work otherwise
+            //                                                                                    Backend     Device
+            TornadoDevice device0 = TornadoExecutionPlan.getDevice(0, 0);  // spir-v  (iGPU Intel)
+            TornadoDevice device1 = TornadoExecutionPlan.getDevice(1, 0);  // opencl  (RTX 3070)
+            TornadoDevice device2 = TornadoExecutionPlan.getDevice(1, 1);  // opencl  (iGPU Intel)
+            TornadoDevice device3 = TornadoExecutionPlan.getDevice(1, 2);  // opencl  (CPU Intel)
+            TornadoDevice device4 = TornadoExecutionPlan.getDevice(2, 0);  // ptx     (RTX 3070)
+            executionPlan //
+                .withDevice("imageProcessor.blackAndWhite", device1) //
+                .withDevice("imageProcessor.blurRed", device1) //
+                .withDevice("imageProcessor.blurGreen", device1) //
+                .withDevice("imageProcessor.blurBlue", device1);
         }
     }
 
