@@ -387,7 +387,7 @@ public class BlurFilter {
         @Setup(Level.Trial)
         public void doSetup() {
             // Select here the device to run (backendIndex, deviceIndex)
-            blurFilter = new BlurFilter(Options.Implementation.TORNADO_LOOP, 0, 1);
+            blurFilter = new BlurFilter(Options.Implementation.TORNADO_LOOP, 0, 2);
         }
 
         @Benchmark
@@ -397,7 +397,7 @@ public class BlurFilter {
         @OutputTimeUnit(TimeUnit.NANOSECONDS)
         @Fork(1)
         public void jvmSequential(Benchmarking state) {
-            blurFilter.sequentialComputationJHM();
+            state.blurFilter.sequentialComputationJHM();
         }
 
         @Benchmark
@@ -407,7 +407,7 @@ public class BlurFilter {
         @OutputTimeUnit(TimeUnit.NANOSECONDS)
         @Fork(1)
         public void jvmJavaStreams(Benchmarking state) {
-            blurFilter.parallelStreamsJMH();
+            state.blurFilter.parallelStreamsJMH();
         }
 
         @Benchmark
