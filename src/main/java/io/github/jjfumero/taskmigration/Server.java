@@ -80,7 +80,7 @@ public class Server extends Thread {
         InputStream in = null;
         OutputStream out = null;
 
-        int maxDrivers = TornadoRuntime.getTornadoRuntime().getNumDrivers();
+        int maxDrivers = TornadoRuntime.getTornadoRuntime().getNumBackends();
 
         try {
             in = socket.getInputStream();
@@ -105,7 +105,7 @@ public class Server extends Thread {
                 if (backendIndex >= maxDrivers) {
                     backendIndex = 0;
                     System.out.println(STR."[Warning] max \{maxDrivers} drivers");
-                    int maxDevices = TornadoRuntime.getTornadoRuntime().getDriver(backendIndex).getDeviceCount();
+                    int maxDevices = TornadoRuntime.getTornadoRuntime().getBackend(backendIndex).getDeviceCount();
                     if (maxDevices >= deviceIndex) {
                         System.out.println(STR."[Warning] max \{maxDevices} devices");
                         deviceIndex = 0;
