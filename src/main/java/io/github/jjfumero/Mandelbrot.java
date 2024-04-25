@@ -194,7 +194,7 @@ public class Mandelbrot {
                 long start = System.nanoTime();
                 mandelbrotFractalWithParallelStreams(size, mandelbrotImage);
                 long end = System.nanoTime();
-                System.out.println("Sequential Total time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
+                System.out.println("Streams Total time (ns) = " + (end - start) + " -- seconds = " + ((end - start) * 1e-9));
             }
         }
 

@@ -16,6 +16,21 @@
 package io.github.jjfumero;
 
 import io.github.jjfumero.common.Options;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.options.TimeValue;
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.ImmutableTaskGraph;
 import uk.ac.manchester.tornado.api.KernelContext;
@@ -34,6 +49,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 /**
@@ -93,8 +109,13 @@ public class BlurFilter {
     FloatArray filter;
     private GridScheduler grid;
 
+    private int backendIndex = 0;
+    private int deviceIndex = 0;
+
     public BlurFilter(Options.Implementation implementation, int backendIndex, int deviceIndex) {
         this.implementation = implementation;
+        this.backendIndex = backendIndex;
+        this.deviceIndex = deviceIndex;
         loadImage();
         initData();
         if (implementation == Options.Implementation.TORNADO_LOOP) {
@@ -282,6 +303,12 @@ public class BlurFilter {
         }
     }
 
+    private void sequentialComputationJHM() {
+        channelConvolutionSequential(redChannel, redFilter, w, h, filter, FILTER_WIDTH);
+        channelConvolutionSequential(greenChannel, greenFilter, w, h, filter, FILTER_WIDTH);
+        channelConvolutionSequential(blueChannel, blueFilter, w, h, filter, FILTER_WIDTH);
+    }
+
     private void parallelStreams() {
         for (int i = 0; i< MAX_ITERATIONS; i++) {
             long start = System.nanoTime();
@@ -293,13 +320,23 @@ public class BlurFilter {
         }
     }
 
+    private void parallelStreamsJMH() {
+        computeWithParallelStreams(redChannel, redFilter, w, h, filter, FILTER_WIDTH);
+        computeWithParallelStreams(greenChannel, greenFilter, w, h, filter, FILTER_WIDTH);
+        computeWithParallelStreams(blueChannel, blueFilter, w, h, filter, FILTER_WIDTH);
+    }
+
     private void runTornadoVM() {
         for (int i = 0; i< MAX_ITERATIONS; i++) {
             long start = System.nanoTime();
             executionPlan.execute();
             long end = System.nanoTime();
-            System.out.println(STR."Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
+            System.out.println(STR."TornadoVM Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
+    }
+
+    private void runTornadoVMJMH() {
+        executionPlan.execute();
     }
 
     private void runTornadoVMWithContext() {
@@ -307,12 +344,12 @@ public class BlurFilter {
             long start = System.nanoTime();
             executionPlan.execute();
             long end = System.nanoTime();
-            System.out.println(STR."Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
+            System.out.println(STR."TornadoVM(kernelAPI) Total Time (ns) = \{end - start} -- seconds = \{(end - start) * 1e-9}");
         }
     }
 
 
-    public void run() {
+    public void run() throws RunnerException {
         switch (implementation) {
             case SEQUENTIAL:
                 sequentialComputation();
@@ -326,11 +363,76 @@ public class BlurFilter {
             case TORNADO_KERNEL:
                 runTornadoVMWithContext();
                 break;
+            case JMH:
+                Benchmarking.version = "jmh";
+                Benchmarking.backendIndex = backendIndex;
+                Benchmarking.deviceIndex = deviceIndex;
+                runWithJMH();
+                break;
         }
         writeFile();
     }
 
-    public static void main(String[] args) {
+    // Class to run with the JHM Java framework
+    @State(Scope.Thread)
+    public static class Benchmarking {
+
+        BlurFilter blurFilter;
+        public static String version;
+        public static int backendIndex;
+        public static int deviceIndex;
+
+        @Setup(Level.Trial)
+        public void doSetup() {
+            blurFilter = new BlurFilter(Options.getImplementation(version), backendIndex, deviceIndex);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60, timeUnit = TimeUnit.SECONDS)
+        @Measurement(iterations = 5, time = 30, timeUnit = TimeUnit.SECONDS)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void jvmSequential(Benchmarking state) throws RunnerException {
+            state.blurFilter.sequentialComputationJHM();
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60, timeUnit = TimeUnit.SECONDS)
+        @Measurement(iterations = 5, time = 30, timeUnit = TimeUnit.SECONDS)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void jvmJavaStreams(Benchmarking state) throws RunnerException {
+            state.blurFilter.parallelStreamsJMH();
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60, timeUnit = TimeUnit.SECONDS)
+        @Measurement(iterations = 5, time = 30, timeUnit = TimeUnit.SECONDS)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void runTornadoVM(Benchmarking state) throws RunnerException {
+            state.blurFilter.runTornadoVMJMH();
+        }
+    }
+
+    private static void runWithJMH() throws RunnerException {
+       org.openjdk.jmh.runner.options.Options opt = new OptionsBuilder() //
+               .include(BlurFilter.class.getName() + ".*") //
+               .mode(Mode.AverageTime) //
+               .timeUnit(TimeUnit.NANOSECONDS) //
+               .warmupTime(TimeValue.seconds(1)) //
+               .warmupIterations(1) //
+               .measurementTime(TimeValue.seconds(5)) //
+               .measurementIterations(5) //
+               .forks(1) //
+               .build();
+        new Runner(opt).run();
+    }
+
+    public static void main(String[] args) throws RunnerException {
 
         String version = "tornado";  // Use acceleration by default
         int backendIndex = 0;

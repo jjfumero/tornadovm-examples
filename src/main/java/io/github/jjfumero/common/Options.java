@@ -24,7 +24,8 @@ public final class Options {
         SEQUENTIAL,
         MT,
         TORNADO_LOOP,
-        TORNADO_KERNEL
+        TORNADO_KERNEL,
+        JMH
     }
 
     private static final Map<String, Implementation> VALID_OPTIONS = new HashMap<>();
@@ -36,6 +37,7 @@ public final class Options {
         VALID_OPTIONS.put("tornado", Implementation.TORNADO_LOOP);
         VALID_OPTIONS.put("tornadoContext", Implementation.TORNADO_KERNEL);
         VALID_OPTIONS.put("tornadocontext", Implementation.TORNADO_KERNEL);
+        VALID_OPTIONS.put("jmh", Implementation.JMH);
     }
 
     public static Implementation getImplementation(String str) {
@@ -52,6 +54,7 @@ public final class Options {
         System.out.println("\ttornadoContext: for accelerated version with TornadoVM");
         System.out.println("\tseq: for running the sequential version with Java Streams");
         System.out.println("\tmt: for running the CPU multi-thread version with Java Parallel Streams");
+        System.out.println("\tjmh: for running in benchmarking mode with JMH (not all tests supported)");
     }
 
 }
