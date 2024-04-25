@@ -82,6 +82,19 @@ import java.util.stream.IntStream;
  *     tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter mt
  * </code>
  *
+ *
+ * To run with JMH on default device:
+ *
+ * <code>
+ *     tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter jmh
+ * </code>
+ *
+ * To run with JMH:
+ *  *
+ *  * <code>
+ *  *     tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter jmh
+ *  * </code>
+ *
  */
 public class BlurFilter {
 
@@ -109,13 +122,8 @@ public class BlurFilter {
     FloatArray filter;
     private GridScheduler grid;
 
-    private int backendIndex = 0;
-    private int deviceIndex = 0;
-
     public BlurFilter(Options.Implementation implementation, int backendIndex, int deviceIndex) {
         this.implementation = implementation;
-        this.backendIndex = backendIndex;
-        this.deviceIndex = deviceIndex;
         loadImage();
         initData();
         if (implementation == Options.Implementation.TORNADO_LOOP) {
@@ -364,9 +372,6 @@ public class BlurFilter {
                 runTornadoVMWithContext();
                 break;
             case JMH:
-                Benchmarking.version = "jmh";
-                Benchmarking.backendIndex = backendIndex;
-                Benchmarking.deviceIndex = deviceIndex;
                 runWithJMH();
                 break;
         }
@@ -378,13 +383,11 @@ public class BlurFilter {
     public static class Benchmarking {
 
         BlurFilter blurFilter;
-        public static String version;
-        public static int backendIndex;
-        public static int deviceIndex;
 
         @Setup(Level.Trial)
         public void doSetup() {
-            blurFilter = new BlurFilter(Options.getImplementation(version), backendIndex, deviceIndex);
+            // Select here the device to run (backendIndex, deviceIndex)
+            blurFilter = new BlurFilter(Options.Implementation.TORNADO_LOOP, 0, 1);
         }
 
         @Benchmark
@@ -393,8 +396,8 @@ public class BlurFilter {
         @Measurement(iterations = 5, time = 30, timeUnit = TimeUnit.SECONDS)
         @OutputTimeUnit(TimeUnit.NANOSECONDS)
         @Fork(1)
-        public void jvmSequential(Benchmarking state) throws RunnerException {
-            state.blurFilter.sequentialComputationJHM();
+        public void jvmSequential(Benchmarking state) {
+            blurFilter.sequentialComputationJHM();
         }
 
         @Benchmark
@@ -403,8 +406,8 @@ public class BlurFilter {
         @Measurement(iterations = 5, time = 30, timeUnit = TimeUnit.SECONDS)
         @OutputTimeUnit(TimeUnit.NANOSECONDS)
         @Fork(1)
-        public void jvmJavaStreams(Benchmarking state) throws RunnerException {
-            state.blurFilter.parallelStreamsJMH();
+        public void jvmJavaStreams(Benchmarking state) {
+            blurFilter.parallelStreamsJMH();
         }
 
         @Benchmark
@@ -413,7 +416,7 @@ public class BlurFilter {
         @Measurement(iterations = 5, time = 30, timeUnit = TimeUnit.SECONDS)
         @OutputTimeUnit(TimeUnit.NANOSECONDS)
         @Fork(1)
-        public void runTornadoVM(Benchmarking state) throws RunnerException {
+        public void runTornadoVM(Benchmarking state) {
             state.blurFilter.runTornadoVMJMH();
         }
     }
@@ -423,9 +426,9 @@ public class BlurFilter {
                .include(BlurFilter.class.getName() + ".*") //
                .mode(Mode.AverageTime) //
                .timeUnit(TimeUnit.NANOSECONDS) //
-               .warmupTime(TimeValue.seconds(1)) //
-               .warmupIterations(1) //
-               .measurementTime(TimeValue.seconds(5)) //
+               .warmupTime(TimeValue.seconds(60)) //
+               .warmupIterations(2) //
+               .measurementTime(TimeValue.seconds(30)) //
                .measurementIterations(5) //
                .forks(1) //
                .build();
