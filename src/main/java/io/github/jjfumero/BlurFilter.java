@@ -83,17 +83,11 @@ import java.util.stream.IntStream;
  * </code>
  *
  *
- * To run with JMH on default device:
+ * To run with JMH:
  *
  * <code>
  *     tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter jmh
  * </code>
- *
- * To run with JMH:
- *  *
- *  * <code>
- *  *     tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.BlurFilter jmh
- *  * </code>
  *
  */
 public class BlurFilter {
@@ -387,7 +381,7 @@ public class BlurFilter {
         @Setup(Level.Trial)
         public void doSetup() {
             // Select here the device to run (backendIndex, deviceIndex)
-            blurFilter = new BlurFilter(Options.Implementation.TORNADO_LOOP, 0, 2);
+            blurFilter = new BlurFilter(Options.Implementation.TORNADO_LOOP, 0, 3);
         }
 
         @Benchmark
