@@ -43,13 +43,13 @@ import java.util.stream.IntStream;
  * How to run?
  *
  * <code>
- *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar --jvm="-Ds0.t0.device=0:0" io.github.jjfumero.Mandelbrot
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar --jvm="-Dfractal.mandelbrot.device=0:0" io.github.jjfumero.Mandelbrot
  * </code>
  *
  * How to run on another device?
  *
  * <code>
- *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar  --jvm="-Ds0.t0.device=1:0" io.github.jjfumero.Mandelbrot
+ *     $ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar  --jvm="-Dfractal.mandelbrot.device=1:0" io.github.jjfumero.Mandelbrot
  * </code>
  *
  */
@@ -151,25 +151,26 @@ public class Mandelbrot {
         ShortArray mandelbrotImage;
         GridScheduler grid;
 
-        private Options.Implementation implementation;
+        private final Options.Implementation implementation;
 
 
         private  void doSetup() {
             mandelbrotImage = new ShortArray(size * size);
             if (implementation == Options.Implementation.TORNADO_LOOP) {
-                ts = new TaskGraph("s0") //
-                        .task("t0", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
+                ts = new TaskGraph("fractal") //
+                        .task("mandelbrot", Mandelbrot::mandelbrotFractal, size, mandelbrotImage) //
                         .transferToHost(DataTransferMode.EVERY_EXECUTION, mandelbrotImage);
                 executionPlan = new TornadoExecutionPlan(ts.snapshot());
+
             } else if (implementation == Options.Implementation.TORNADO_KERNEL) {
                 WorkerGrid workerGrid = new WorkerGrid2D(size, size);
                 workerGrid.setLocalWork(16, 16, 1);
                 grid = new GridScheduler();
-                grid.setWorkerGrid("s0.t0", workerGrid);
+                grid.setWorkerGrid("fractal.mandelbrot", workerGrid);
                 KernelContext context = new KernelContext();
 
-                ts = new TaskGraph("s0") //
-                        .task("t0", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
+                ts = new TaskGraph("fractal") //
+                        .task("mandelbrot", Mandelbrot::mandelbrotFractalWithContext, size, mandelbrotImage, context) //
                         .transferToHost(DataTransferMode.EVERY_EXECUTION, mandelbrotImage);
                 executionPlan = new TornadoExecutionPlan(ts.snapshot());
             }

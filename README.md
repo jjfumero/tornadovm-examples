@@ -121,10 +121,10 @@ tornado --debug --threadInfo -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.g
 spirv-dis <spirv-binary> 
 
 ## Change the device
-tornado --threadInfo --jvm="-Ds0.t0.device=1:1" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
+tornado --threadInfo --jvm="-Dfractal.mandelbrot.device=1:1" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 
 ## Run with the tornadoVM profiler
-tornado --enableProfiler console --threadInfo --jvm="-Ds0.t0.device=0:0" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
+tornado --enableProfiler console --threadInfo --jvm="-Dfractal.mandelbrot.device=0:0" -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Mandelbrot tornado
 ```
 
 
