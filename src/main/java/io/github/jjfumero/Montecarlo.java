@@ -80,6 +80,8 @@ public class Montecarlo {
     public static void monteCarlo(FloatArray result, int size) {
         final int iter = 25000;
         for (@Parallel int idx = 0; idx < size; idx++) {
+            // For some reason, inlining does not work in TornadoVM for this example
+            // when using v1.0.5-dev
             long seed = idx;
             float sum = 0.0f;
             for (int j = 0; j < iter; ++j) {
