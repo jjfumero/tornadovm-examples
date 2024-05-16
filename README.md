@@ -1,11 +1,10 @@
 ## TornadoVM Examples
 
-[TornadoVM](https://github.com/beehive-lab/TornadoVM) is a Java library for hardware acceleration of Java and JVM applications. 
-It has a JIT compiler, a runtime system, and several backends that offload, manage memory and handle execution on GPUs, FPGAs, and multicore CPUs transparently. 
+[TornadoVM](https://github.com/beehive-lab/TornadoVM) is a Java library for hardware acceleration of Java and JVM applications. It has a JIT compiler, a runtime system, and several backends that offload, manage memory and handle execution on GPUs, FPGAs, and multicore CPUs transparently. 
 
 This repository contains a few examples for demonstration purposes. 
 
-Note: Examples using TornadoVM [v1.0.4-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
+Note: Examples using TornadoVM [v1.0.5-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
 
 
 Outline:
