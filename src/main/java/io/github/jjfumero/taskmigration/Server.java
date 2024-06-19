@@ -31,7 +31,7 @@ import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
+import uk.ac.manchester.tornado.api.runtime.TornadoRuntimeProvider;
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
 
 public class Server extends Thread {
@@ -80,7 +80,7 @@ public class Server extends Thread {
         InputStream in = null;
         OutputStream out = null;
 
-        int maxDrivers = TornadoRuntime.getTornadoRuntime().getNumBackends();
+        int maxDrivers = TornadoRuntimeProvider.getTornadoRuntime().getNumBackends();
 
         try {
             in = socket.getInputStream();
@@ -105,7 +105,7 @@ public class Server extends Thread {
                 if (backendIndex >= maxDrivers) {
                     backendIndex = 0;
                     System.out.println(STR."[Warning] max \{maxDrivers} drivers");
-                    int maxDevices = TornadoRuntime.getTornadoRuntime().getBackend(backendIndex).getDeviceCount();
+                    int maxDevices = TornadoRuntimeProvider.getTornadoRuntime().getBackend(backendIndex).getNumDevices();
                     if (maxDevices >= deviceIndex) {
                         System.out.println(STR."[Warning] max \{maxDevices} devices");
                         deviceIndex = 0;
