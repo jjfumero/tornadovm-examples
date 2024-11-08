@@ -18,6 +18,7 @@ Outline:
 | Multi-Image Processing demo | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#multi-image-processing)                |
 | KMeans Clustering demo      | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#kmeans-clustering)                     |
 | Live Task Migration demo    | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#live-task-migration-client-server-app) |
+| Matrix Multiplication       | [link](https://github.com/jjfumero/tornadovm-examples?tab=readme-ov-file#matrix-multiplication)                 |
 
 
 ## 1. Build TornadoVM
@@ -293,4 +294,23 @@ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.KMeans
 # 0:1 
 # 1:0 
 ## etc
+```
+
+
+### Matrix Multiplication
+
+This application shows different implementation for Matrix Multiplications for:
+
+1. Single-core Sequential Implementation using Panama Segments
+2. Multi-core Parallel Streams Using Panama Segments
+3. Multi-core Java Threads using Panama Segments 
+4. Single-core Sequential implementation using Panama Vector Types for the reduction part (dotProduct)
+5. Multi-core Parallel Stream implementation using Panama Vector Types for the reduction part (dotProduct)
+6. TornadoVM to run on the default device (usually a GPU if a GPU backends is available and installed)
+
+How to run? 
+
+```bash
+mvn clean pacakge
+./runMxM.sh
 ```
