@@ -167,16 +167,25 @@ public class MatrixMultiplication {
             }
         }
 
+        public static FloatMatrix transposeMatrix(FloatMatrix matrix) {
+            FloatMatrix matrixTranspose = new FloatMatrix(matrix.M(), matrix.N());
+            for (int i = 0; i < matrix.M(); i++) {
+                for (int j = 0; j < matrix.N(); j++) {
+                    matrixTranspose.set(i, j, matrix.get(j, i));
+                }
+            }
+            return matrixTranspose;
+        }
+
+        static final int FLOAT_BYTES = 4;
         public static void mxmSequentialVectorized(FloatMatrix a, FloatMatrix b, FloatMatrix c) {
             VectorSpecies<Float> species = FloatVector.SPECIES_PREFERRED;
             for (int i = 0; i < a.M(); i++) {
-                for (int j = 0; j < a.M(); j++) {
+                for (int j = 0; j < a.N(); j++) {
                     float acc = 0;
-                    FloatVector vector1;
-                    FloatVector vector2;
                     for (int k = 0; k < c.M(); k += species.length()) {
-                        vector1 = FloatVector.fromMemorySegment(species, a.segment, (i * a.M() + k) * 4, ByteOrder.LITTLE_ENDIAN);
-                        vector2 = FloatVector.fromMemorySegment(species, b.segment, (k * b.N() + j) * 4, ByteOrder.LITTLE_ENDIAN);
+                        FloatVector vector1 = FloatVector.fromMemorySegment(species, a.segment, (i * a.M() + k) * FLOAT_BYTES, ByteOrder.nativeOrder());
+                        FloatVector vector2 = FloatVector.fromMemorySegment(species, b.segment, (j * b.N() + k) * FLOAT_BYTES, ByteOrder.nativeOrder());
                         acc += vector1.mul(vector2).reduceLanes(VectorOperators.ADD);
                     }
                     c.set(i, j, acc);
@@ -188,11 +197,9 @@ public class MatrixMultiplication {
             VectorSpecies<Float> species = FloatVector.SPECIES_PREFERRED;
             IntStream.range(0, a.M()).parallel().forEach(i -> IntStream.range(0, b.N()).parallel().forEach(j -> {
                     float acc = 0;
-                    FloatVector vector1;
-                    FloatVector vector2;
                     for (int k = 0; k < c.M(); k += species.length()) {
-                        vector1 = FloatVector.fromMemorySegment(species, a.segment, (i * a.M() + k) * 4, ByteOrder.LITTLE_ENDIAN);
-                        vector2 = FloatVector.fromMemorySegment(species, b.segment, (k * b.N() + j) * 4, ByteOrder.LITTLE_ENDIAN);
+                        FloatVector vector1 = FloatVector.fromMemorySegment(species, a.segment, (i * a.M() + k) * FLOAT_BYTES, ByteOrder.nativeOrder());
+                        FloatVector vector2 = FloatVector.fromMemorySegment(species, b.segment, (j * b.N() + k) * FLOAT_BYTES, ByteOrder.nativeOrder());
                         acc += vector1.mul(vector2).reduceLanes(VectorOperators.ADD);
                     }
                     c.set(i, j, acc);
@@ -319,9 +326,10 @@ public class MatrixMultiplication {
             System.out.println(Multiplication.verify(matrixE, matrixC));
         }
 
+        FloatMatrix bTranspose = Multiplication.transposeMatrix(matrixB);
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
-            Multiplication.mxmSequentialVectorized(matrixA, matrixB, matrixF);
+            Multiplication.mxmSequentialVectorized(matrixA, bTranspose, matrixF);
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
@@ -331,7 +339,7 @@ public class MatrixMultiplication {
 
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
-            Multiplication.mxmParallelVectorized(matrixA, matrixB, matrixG);
+            Multiplication.mxmParallelVectorized(matrixA, bTranspose, matrixG);
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
