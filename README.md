@@ -4,7 +4,7 @@
 
 This repository contains a few examples for demonstration purposes. 
 
-Note: Examples using TornadoVM [v1.0.5-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
+Note: Examples using TornadoVM [v1.0.9-dev](https://github.com/beehive-lab/TornadoVM/tree/develop)
 
 
 Outline:
