@@ -312,8 +312,8 @@ public class MatrixMultiplication {
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.println("Stream Elapsed time: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(Multiplication.verify(matrixD, matrixC));
+            System.out.print("Stream Elapsed time: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, matrixC));
         }
 
         for (int i = 0; i < RUNS; i++) {
@@ -322,8 +322,8 @@ public class MatrixMultiplication {
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.println("Elapsed time Threads: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(Multiplication.verify(matrixE, matrixC));
+            System.out.print("Elapsed time Threads: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, matrixC));
         }
 
         FloatMatrix bTranspose = Multiplication.transposeMatrix(matrixB);
@@ -333,8 +333,8 @@ public class MatrixMultiplication {
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.println("Elapsed time Vectorized: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(Multiplication.verify(matrixF, matrixC));
+            System.out.print("Elapsed time Vectorized: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, matrixC));
         }
 
         for (int i = 0; i < RUNS; i++) {
@@ -343,8 +343,8 @@ public class MatrixMultiplication {
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.println("Elapsed time Parallel Vectorized: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(Multiplication.verify(matrixG, matrixC));
+            System.out.print("Elapsed time Parallel Vectorized: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, matrixC));
         }
 
         // TornadoVM
@@ -359,8 +359,8 @@ public class MatrixMultiplication {
             long end = System.nanoTime();
             double elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.println("Elapsed time TornadoVM-GPU: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(Multiplication.verify(resultTornadoVM, matrixC));
+            System.out.print("Elapsed time TornadoVM-GPU: " + (end - start) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+            System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, matrixC));
         }
 
     }
