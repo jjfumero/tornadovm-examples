@@ -15,7 +15,6 @@
  */
 package io.github.jjfumero;
 
-import io.github.jjfumero.common.Options;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
