@@ -15,9 +15,25 @@
  */
 package io.github.jjfumero;
 
+import io.github.jjfumero.common.Options;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.options.TimeValue;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -28,6 +44,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteOrder;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
@@ -275,10 +292,126 @@ public class MatrixMultiplication {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    @State(Scope.Thread)
+    public static class Benchmarking {
 
-        System.out.println("Matrix Multiplication");
-        final int size = 1024;
+        MatrixMultiplication matrixMultiplication;
+
+        FloatMatrix matrixA;
+        FloatMatrix matrixB;
+
+        // Matrix for results
+        FloatMatrix matrixC;
+        FloatMatrix matrixD;
+        FloatMatrix matrixE;
+        FloatMatrix matrixF;
+        FloatMatrix matrixG;
+
+        Matrix2DFloat tma;
+        Matrix2DFloat tmb;
+        Matrix2DFloat resultTornadoVM;
+        TornadoExecutionPlan executionPlan;
+
+        @Setup(Level.Trial)
+        public void doSetup() {
+            // Using Panama Segments
+            final int size = 1024;
+            matrixA = new FloatMatrix(size, size);
+            matrixB = new FloatMatrix(size, size);
+
+            // Matrix for results
+            matrixC = new FloatMatrix(size, size);
+            matrixD = new FloatMatrix(size, size);
+            matrixE = new FloatMatrix(size, size);
+            matrixF = new FloatMatrix(size, size);
+            matrixG = new FloatMatrix(size, size);
+
+            matrixA.initRamdom();
+            matrixB.initRamdom();
+
+            // TornadoVM
+            tma = Multiplication.transformMatrixForTornadoVM(matrixA);
+            tmb = Multiplication.transformMatrixForTornadoVM(matrixB);
+            resultTornadoVM = new Matrix2DFloat(size, size);
+            executionPlan = Multiplication.createTornadoVMPlan(tma, tmb, resultTornadoVM);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60)
+        @Measurement(iterations = 5, time = 30)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void mxmSequential(Benchmarking state) {
+            MatrixMultiplication.Multiplication.mxmSequential(state.matrixA, state.matrixB, state.matrixC);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60)
+        @Measurement(iterations = 5, time = 30)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void mxmParallelStreams(Benchmarking state) {
+            MatrixMultiplication.Multiplication.mxmParallelStreams(state.matrixA, state.matrixB, state.matrixD);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60)
+        @Measurement(iterations = 5, time = 30)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void mxmParallelThreads(Benchmarking state) throws InterruptedException {
+            MatrixMultiplication.Multiplication.mxmParallelThreads(state.matrixA, state.matrixB, state.matrixE);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60)
+        @Measurement(iterations = 5, time = 30)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void mxmSequentialVectorized(Benchmarking state) {
+            MatrixMultiplication.Multiplication.mxmSequentialVectorized(state.matrixA, state.matrixB, state.matrixF);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60)
+        @Measurement(iterations = 5, time = 30)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void mxmParallelVectorized(Benchmarking state) {
+            MatrixMultiplication.Multiplication.mxmParallelVectorized(state.matrixA, state.matrixB, state.matrixG);
+        }
+
+        @Benchmark
+        @BenchmarkMode(Mode.AverageTime)
+        @Warmup(iterations = 2, time = 60)
+        @Measurement(iterations = 5, time = 30)
+        @OutputTimeUnit(TimeUnit.NANOSECONDS)
+        @Fork(1)
+        public void mxmTornadoVM(Benchmarking state) {
+            state.executionPlan.execute();
+        }
+    }
+
+    private static void runWithJMH() throws RunnerException {
+        org.openjdk.jmh.runner.options.Options opt = new OptionsBuilder() //
+                .include(MatrixMultiplication.class.getName() + ".*") //
+                .mode(Mode.AverageTime) //
+                .timeUnit(TimeUnit.NANOSECONDS) //
+                .warmupTime(TimeValue.seconds(60)) //
+                .warmupIterations(2) //
+                .measurementTime(TimeValue.seconds(30)) //
+                .measurementIterations(5) //
+                .forks(1) //
+                .build();
+        new Runner(opt).run();
+    }
+
+    private static void runTestAll(final int size) throws InterruptedException {
 
         // Using Panama Segments
         FloatMatrix matrixA = new FloatMatrix(size, size);
@@ -361,6 +494,21 @@ public class MatrixMultiplication {
             System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, matrixC));
         }
+    }
 
+
+    public static void main(String[] args) throws InterruptedException, RunnerException {
+
+        System.out.println("Matrix Multiplication");
+        final int size = 1024;
+
+        if (args.length > 0) {
+            if (args[0].equals("--jmh")) {
+                runWithJMH();
+                return;
+            }
+        }
+
+        runTestAll(size);
     }
 }
