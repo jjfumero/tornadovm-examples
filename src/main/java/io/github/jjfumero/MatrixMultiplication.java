@@ -252,7 +252,7 @@ public class MatrixMultiplication {
                     .task("mxm", Multiplication::mxmTornadoVM, a, b, c, a.getNumRows()) //
                     .transferToHost(DataTransferMode.EVERY_EXECUTION, c);
             TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(taskGraph.snapshot());
-            executionPlan.withWarmUp();
+            executionPlan.withWarmUp().withDevice(TornadoExecutionPlan.getDevice(0, 0));
             return executionPlan;
         }
 
@@ -432,7 +432,7 @@ public class MatrixMultiplication {
             long start = System.nanoTime();
             Multiplication.mxmSequential(matrixA, matrixB, matrixC);
             long end = System.nanoTime();
-            double elapsedTime = (end - start);
+            long elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.println("Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
         }
@@ -441,7 +441,7 @@ public class MatrixMultiplication {
             long start = System.nanoTime();
             Multiplication.mxmParallelStreams(matrixA, matrixB, matrixD);
             long end = System.nanoTime();
-            double elapsedTime = (end - start);
+            long elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, matrixC));
@@ -451,7 +451,7 @@ public class MatrixMultiplication {
             long start = System.nanoTime();
             Multiplication.mxmParallelThreads(matrixA, matrixB, matrixE);
             long end = System.nanoTime();
-            double elapsedTime = (end - start);
+            long elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, matrixC));
@@ -462,7 +462,7 @@ public class MatrixMultiplication {
             long start = System.nanoTime();
             Multiplication.mxmSequentialVectorized(matrixA, bTranspose, matrixF);
             long end = System.nanoTime();
-            double elapsedTime = (end - start);
+            long elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, matrixC));
@@ -472,7 +472,7 @@ public class MatrixMultiplication {
             long start = System.nanoTime();
             Multiplication.mxmParallelVectorized(matrixA, bTranspose, matrixG);
             long end = System.nanoTime();
-            double elapsedTime = (end - start);
+            long elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, matrixC));
@@ -488,7 +488,7 @@ public class MatrixMultiplication {
             long start = System.nanoTime();
             executionPlan.execute();
             long end = System.nanoTime();
-            double elapsedTime = (end - start);
+            long elapsedTime = (end - start);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, matrixC));
