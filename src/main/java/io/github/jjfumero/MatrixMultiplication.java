@@ -39,11 +39,17 @@ import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.types.matrix.Matrix2DFloat;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.lang.reflect.Array;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
@@ -97,6 +103,8 @@ public class MatrixMultiplication {
     }
 
     private static class Multiplication {
+
+        private static final boolean DEBUG = false;
 
         /**
          * Matrix Multiplication using Panama Segments Sequentially
@@ -155,9 +163,11 @@ public class MatrixMultiplication {
                 ranges[i] = new Range(min, max);
             }
 
-//            Arrays.stream(ranges).forEach(r -> {
-//                System.out.println(r + " -- " + (r.max - r.min));
-//            });
+            if (DEBUG) {
+                Arrays.stream(ranges).forEach(r -> {
+                    System.out.println(r + " -- " + (r.max - r.min));
+                });
+            }
 
             Thread[] threads = new Thread[maxProcessors];
             IntStream.range(0, threads.length).forEach(t -> {
@@ -428,51 +438,66 @@ public class MatrixMultiplication {
 
         final int RUNS = 10;
 
+        // 6 implementations to compare
+        ArrayList<ArrayList<Long>> timers = IntStream.range(0, 6) //
+                .<ArrayList<Long>>mapToObj(i -> new ArrayList<>()) //
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        // 1. Sequential
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
             Multiplication.mxmSequential(matrixA, matrixB, matrixC);
             long end = System.nanoTime();
             long elapsedTime = (end - start);
+            timers.get(0).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.println("Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
         }
 
+        // 2. Parallel Streams
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
             Multiplication.mxmParallelStreams(matrixA, matrixB, matrixD);
             long end = System.nanoTime();
             long elapsedTime = (end - start);
+            timers.get(1).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, matrixC));
         }
 
+        // 3. Parallel with Java Threads
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
             Multiplication.mxmParallelThreads(matrixA, matrixB, matrixE);
             long end = System.nanoTime();
             long elapsedTime = (end - start);
+            timers.get(2).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, matrixC));
         }
 
+        // 4. Sequential Using the Vector API
         FloatMatrix bTranspose = Multiplication.transposeMatrix(matrixB);
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
             Multiplication.mxmSequentialVectorized(matrixA, bTranspose, matrixF);
             long end = System.nanoTime();
             long elapsedTime = (end - start);
+            timers.get(3).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, matrixC));
         }
 
+        // 5. Parallel Streams using the Vector API
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
             Multiplication.mxmParallelVectorized(matrixA, bTranspose, matrixG);
             long end = System.nanoTime();
             long elapsedTime = (end - start);
+            timers.get(4).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, matrixC));
@@ -484,14 +509,33 @@ public class MatrixMultiplication {
         Matrix2DFloat resultTornadoVM = new Matrix2DFloat(size, size);
         TornadoExecutionPlan executionPlan = Multiplication.createTornadoVMPlan(tma, tmb, resultTornadoVM);
 
+        // 6. On the GPU using TornadoVM
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
             executionPlan.execute();
             long end = System.nanoTime();
             long elapsedTime = (end - start);
+            timers.get(5).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
             System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, matrixC));
+        }
+
+        // Print CSV table with RAW elapsed timers
+        try (FileWriter fileWriter = new FileWriter("performanceTable.csv")) {
+            // Write header
+            fileWriter.write("sequential,streams,threads,vectorSingle,vectorParallel,TornadoVM\n");
+            // Write data
+            for (int i = 0; i < RUNS; i++) {
+                StringBuilder builder = new StringBuilder();
+                for (int j = 0; j < 6; j++) {
+                    builder.append(timers.get(j).get(i) + ",");
+                }
+                fileWriter.write(builder.substring(0, builder.length() -1));
+                fileWriter.write("\n");
+            }
+        } catch (IOException e) {
+            System.err.println("An error occurred: " + e.getMessage());
         }
     }
 
@@ -507,7 +551,6 @@ public class MatrixMultiplication {
                 return;
             }
         }
-
         runTestAll(size);
     }
 }
