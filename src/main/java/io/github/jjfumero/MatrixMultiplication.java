@@ -436,7 +436,7 @@ public class MatrixMultiplication {
         matrixA.initRamdom();
         matrixB.initRamdom();
 
-        final int RUNS = 10;
+        final int RUNS = 100;
 
         // 6 implementations to compare
         ArrayList<ArrayList<Long>> timers = IntStream.range(0, 6) //
