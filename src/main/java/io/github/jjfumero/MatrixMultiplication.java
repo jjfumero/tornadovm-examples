@@ -231,6 +231,13 @@ public class MatrixMultiplication {
                 }));
         }
 
+        /**
+         * This method computes squared matrix multiplication.
+         * @param a
+         * @param b
+         * @param c
+         * @param size (num rows and num columns)
+         */
         private static void mxmTornadoVM(Matrix2DFloat a, Matrix2DFloat b, Matrix2DFloat c, final int size) {
             for (@Parallel int i = 0; i < size; i++) {
                 for (@Parallel int j = 0; j < size; j++) {
@@ -426,7 +433,7 @@ public class MatrixMultiplication {
         FloatMatrix matrixB = new FloatMatrix(size, size);
 
         // Matrix for results
-        FloatMatrix matrixC = new FloatMatrix(size, size);
+        FloatMatrix outputReference = new FloatMatrix(size, size);
         FloatMatrix matrixD = new FloatMatrix(size, size);
         FloatMatrix matrixE = new FloatMatrix(size, size);
         FloatMatrix matrixF = new FloatMatrix(size, size);
@@ -435,7 +442,7 @@ public class MatrixMultiplication {
         matrixA.initRamdom();
         matrixB.initRamdom();
 
-        final int RUNS = 100;
+        final int RUNS = 10;
 
         // 6 implementations to compare
         ArrayList<ArrayList<Long>> timers = IntStream.range(0, 6) //
@@ -445,7 +452,7 @@ public class MatrixMultiplication {
         // 1. Sequential
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
-            Multiplication.mxmSequential(matrixA, matrixB, matrixC);
+            Multiplication.mxmSequential(matrixA, matrixB, outputReference);
             long end = System.nanoTime();
             long elapsedTime = (end - start);
             timers.get(0).add(elapsedTime);
@@ -462,7 +469,7 @@ public class MatrixMultiplication {
             timers.get(1).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, matrixC));
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, outputReference));
         }
 
         // 3. Parallel with Java Threads
@@ -474,7 +481,7 @@ public class MatrixMultiplication {
             timers.get(2).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, matrixC));
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, outputReference));
         }
 
         // 4. Sequential Using the Vector API
@@ -487,7 +494,7 @@ public class MatrixMultiplication {
             timers.get(3).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, matrixC));
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, outputReference));
         }
 
         // 5. Parallel Streams using the Vector API
@@ -499,7 +506,7 @@ public class MatrixMultiplication {
             timers.get(4).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, matrixC));
+            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, outputReference));
         }
 
         // TornadoVM
@@ -517,7 +524,7 @@ public class MatrixMultiplication {
             timers.get(5).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
             System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, matrixC));
+            System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, outputReference));
         }
 
         // Print CSV table with RAW elapsed timers
@@ -538,11 +545,11 @@ public class MatrixMultiplication {
         }
     }
 
-
     public static void main(String[] args) throws InterruptedException, RunnerException {
 
-        System.out.println("Matrix Multiplication");
+        System.out.println("[INFO] Matrix Multiplication");
         final int size = 1024;
+        System.out.println("[INFO] MxM size: " + size + "x" + size);
 
         if (args.length > 0) {
             if (args[0].equals("--jmh")) {
