@@ -55,6 +55,13 @@ import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
 
 public class MatrixMultiplication {
 
+
+    // Change this value to adapt the matrix size (size x size)
+    final static int SIZE = 1024;
+
+    private final static double FLOP = 2 * Math.pow(SIZE, 3);
+    private final static float TIME_SCALE_SECS = 1.0E09f;
+
     /**
      * Float MxN Matrix
      */
@@ -457,7 +464,11 @@ public class MatrixMultiplication {
             long elapsedTime = (end - start);
             timers.get(0).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.println("Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+
+            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+            String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+            System.out.println("Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
         }
 
         // 2. Parallel Streams
@@ -468,7 +479,11 @@ public class MatrixMultiplication {
             long elapsedTime = (end - start);
             timers.get(1).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+
+            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+            String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+            System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, outputReference));
         }
 
@@ -480,7 +495,11 @@ public class MatrixMultiplication {
             long elapsedTime = (end - start);
             timers.get(2).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+
+            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+            String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+            System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, outputReference));
         }
 
@@ -493,7 +512,11 @@ public class MatrixMultiplication {
             long elapsedTime = (end - start);
             timers.get(3).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+
+            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+            String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+            System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, outputReference));
         }
 
@@ -505,7 +528,11 @@ public class MatrixMultiplication {
             long elapsedTime = (end - start);
             timers.get(4).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+
+            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+            String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+            System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
             System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, outputReference));
         }
 
@@ -523,7 +550,11 @@ public class MatrixMultiplication {
             long elapsedTime = (end - start);
             timers.get(5).add(elapsedTime);
             double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-            System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms)");
+
+            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+            String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+            System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
             System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, outputReference));
         }
 
@@ -548,7 +579,7 @@ public class MatrixMultiplication {
     public static void main(String[] args) throws InterruptedException, RunnerException {
 
         System.out.println("[INFO] Matrix Multiplication");
-        final int size = 1024;
+        final int size = SIZE;
         System.out.println("[INFO] MxM size: " + size + "x" + size);
 
         if (args.length > 0) {
