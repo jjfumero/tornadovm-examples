@@ -90,7 +90,7 @@ public class MatrixMultiplication {
             return segment.get(JAVA_FLOAT, index * FLOAT_SIZE);
         }
 
-        public void initRamdom() {
+        public void initRandom() {
             Random r = new Random(71);
             for (int i = 0; i < m; i++) {
                 for (int j = 0; j < n; j++) {
@@ -348,8 +348,8 @@ public class MatrixMultiplication {
             matrixF = new FloatMatrix(size, size);
             matrixG = new FloatMatrix(size, size);
 
-            matrixA.initRamdom();
-            matrixB.initRamdom();
+            matrixA.initRandom();
+            matrixB.initRandom();
 
             // TornadoVM
             tma = Multiplication.transformMatrixForTornadoVM(matrixA);
@@ -446,8 +446,8 @@ public class MatrixMultiplication {
         FloatMatrix matrixF = new FloatMatrix(size, size);
         FloatMatrix matrixG = new FloatMatrix(size, size);
 
-        matrixA.initRamdom();
-        matrixB.initRamdom();
+        matrixA.initRandom();
+        matrixB.initRandom();
 
         final int RUNS = 10;
 
