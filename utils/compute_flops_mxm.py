@@ -16,7 +16,7 @@ def computeFlops(args):
     nanosecondsSolution = args.time
     numFloatOperationsPerKernel = 2 * matrixSize**3 
     timeScaleSec = 1E9
-    gigaflops = 1E-9 * numFloatOperationsPerKernel / (nanosecondsSolution / timeScaleSec)
+    gigaflops = (1E-9 * numFloatOperationsPerKernel) / (nanosecondsSolution / timeScaleSec)
     print("GigaGlops: " + str(round(gigaflops, 2)))
 
 if __name__ == "__main__":
