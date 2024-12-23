@@ -55,12 +55,17 @@ import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
 
 public class MatrixMultiplication {
 
-
     // Change this value to adapt the matrix size (size x size)
     final static int SIZE = 1024;
 
     private final static double FLOP = 2 * Math.pow(SIZE, 3);
     private final static float TIME_SCALE_SECS = 1.0E09f;
+
+    private enum Option {
+        JAVA_SEQ_ONLY,
+        JAVA_ONLY,
+        ALL;
+    }
 
     /**
      * Float MxN Matrix
@@ -433,7 +438,7 @@ public class MatrixMultiplication {
         new Runner(opt).run();
     }
 
-    private static void runTestAll(final int size) throws InterruptedException {
+    private static void runTestAll(final int size, Option option) throws InterruptedException {
 
         // Using Panama Segments
         FloatMatrix matrixA = new FloatMatrix(size, size);
@@ -471,108 +476,112 @@ public class MatrixMultiplication {
             System.out.println("Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
         }
 
-        // 2. Parallel Streams
-        for (int i = 0; i < RUNS; i++) {
-            long start = System.nanoTime();
-            Multiplication.mxmParallelStreams(matrixA, matrixB, matrixD);
-            long end = System.nanoTime();
-            long elapsedTime = (end - start);
-            timers.get(1).add(elapsedTime);
-            double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-
-            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
-            String formatGPUFGlops = String.format("%.2f", gigaFlops);
-
-            System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, outputReference));
-        }
-
-        // 3. Parallel with Java Threads
-        for (int i = 0; i < RUNS; i++) {
-            long start = System.nanoTime();
-            Multiplication.mxmParallelThreads(matrixA, matrixB, matrixE);
-            long end = System.nanoTime();
-            long elapsedTime = (end - start);
-            timers.get(2).add(elapsedTime);
-            double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-
-            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
-            String formatGPUFGlops = String.format("%.2f", gigaFlops);
-
-            System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, outputReference));
-        }
-
-        // 4. Sequential Using the Vector API
-        FloatMatrix bTranspose = Multiplication.transposeMatrix(matrixB);
-        for (int i = 0; i < RUNS; i++) {
-            long start = System.nanoTime();
-            Multiplication.mxmSequentialVectorized(matrixA, bTranspose, matrixF);
-            long end = System.nanoTime();
-            long elapsedTime = (end - start);
-            timers.get(3).add(elapsedTime);
-            double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-
-            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
-            String formatGPUFGlops = String.format("%.2f", gigaFlops);
-
-            System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, outputReference));
-        }
-
-        // 5. Parallel Streams using the Vector API
-        for (int i = 0; i < RUNS; i++) {
-            long start = System.nanoTime();
-            Multiplication.mxmParallelVectorized(matrixA, bTranspose, matrixG);
-            long end = System.nanoTime();
-            long elapsedTime = (end - start);
-            timers.get(4).add(elapsedTime);
-            double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-
-            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
-            String formatGPUFGlops = String.format("%.2f", gigaFlops);
-
-            System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, outputReference));
-        }
-
-        // TornadoVM
-        Matrix2DFloat tma = Multiplication.transformMatrixForTornadoVM(matrixA);
-        Matrix2DFloat tmb = Multiplication.transformMatrixForTornadoVM(matrixB);
-        Matrix2DFloat resultTornadoVM = new Matrix2DFloat(size, size);
-        TornadoExecutionPlan executionPlan = Multiplication.createTornadoVMPlan(tma, tmb, resultTornadoVM);
-
-        // 6. On the GPU using TornadoVM
-        for (int i = 0; i < RUNS; i++) {
-            long start = System.nanoTime();
-            executionPlan.execute();
-            long end = System.nanoTime();
-            long elapsedTime = (end - start);
-            timers.get(5).add(elapsedTime);
-            double elapsedTimeMilliseconds = elapsedTime * 1E-6;
-
-            double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
-            String formatGPUFGlops = String.format("%.2f", gigaFlops);
-
-            System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
-            System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, outputReference));
-        }
-
-        // Print CSV table with RAW elapsed timers
-        try (FileWriter fileWriter = new FileWriter("performanceTable.csv")) {
-            // Write header
-            fileWriter.write("sequential,streams,threads,vectorSingle,vectorParallel,TornadoVM\n");
-            // Write data
+        if (option == Option.ALL || option == Option.JAVA_ONLY) {
+            // 2. Parallel Streams
             for (int i = 0; i < RUNS; i++) {
-                StringBuilder builder = new StringBuilder();
-                for (int j = 0; j < 6; j++) {
-                    builder.append(timers.get(j).get(i) + ",");
-                }
-                fileWriter.write(builder.substring(0, builder.length() -1));
-                fileWriter.write("\n");
+                long start = System.nanoTime();
+                Multiplication.mxmParallelStreams(matrixA, matrixB, matrixD);
+                long end = System.nanoTime();
+                long elapsedTime = (end - start);
+                timers.get(1).add(elapsedTime);
+                double elapsedTimeMilliseconds = elapsedTime * 1E-6;
+
+                double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+                String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+                System.out.print("Stream Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
+                System.out.println(" -- Result Correct? " + Multiplication.verify(matrixD, outputReference));
             }
-        } catch (IOException e) {
-            System.err.println("An error occurred: " + e.getMessage());
+
+            // 3. Parallel with Java Threads
+            for (int i = 0; i < RUNS; i++) {
+                long start = System.nanoTime();
+                Multiplication.mxmParallelThreads(matrixA, matrixB, matrixE);
+                long end = System.nanoTime();
+                long elapsedTime = (end - start);
+                timers.get(2).add(elapsedTime);
+                double elapsedTimeMilliseconds = elapsedTime * 1E-6;
+
+                double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+                String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+                System.out.print("Elapsed time Threads: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
+                System.out.println(" -- Result Correct? " + Multiplication.verify(matrixE, outputReference));
+            }
+
+            // 4. Sequential Using the Vector API
+            FloatMatrix bTranspose = Multiplication.transposeMatrix(matrixB);
+            for (int i = 0; i < RUNS; i++) {
+                long start = System.nanoTime();
+                Multiplication.mxmSequentialVectorized(matrixA, bTranspose, matrixF);
+                long end = System.nanoTime();
+                long elapsedTime = (end - start);
+                timers.get(3).add(elapsedTime);
+                double elapsedTimeMilliseconds = elapsedTime * 1E-6;
+
+                double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+                String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+                System.out.print("Elapsed time Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
+                System.out.println(" -- Result Correct? " + Multiplication.verify(matrixF, outputReference));
+            }
+
+            // 5. Parallel Streams using the Vector API
+            for (int i = 0; i < RUNS; i++) {
+                long start = System.nanoTime();
+                Multiplication.mxmParallelVectorized(matrixA, bTranspose, matrixG);
+                long end = System.nanoTime();
+                long elapsedTime = (end - start);
+                timers.get(4).add(elapsedTime);
+                double elapsedTimeMilliseconds = elapsedTime * 1E-6;
+
+                double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+                String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+                System.out.print("Elapsed time Parallel Vectorized: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
+                System.out.println(" -- Result Correct? " + Multiplication.verify(matrixG, outputReference));
+            }
+        }
+
+        if (option == Option.ALL) {
+            // TornadoVM
+            Matrix2DFloat tma = Multiplication.transformMatrixForTornadoVM(matrixA);
+            Matrix2DFloat tmb = Multiplication.transformMatrixForTornadoVM(matrixB);
+            Matrix2DFloat resultTornadoVM = new Matrix2DFloat(size, size);
+            TornadoExecutionPlan executionPlan = Multiplication.createTornadoVMPlan(tma, tmb, resultTornadoVM);
+
+            // 6. On the GPU using TornadoVM
+            for (int i = 0; i < RUNS; i++) {
+                long start = System.nanoTime();
+                executionPlan.execute();
+                long end = System.nanoTime();
+                long elapsedTime = (end - start);
+                timers.get(5).add(elapsedTime);
+                double elapsedTimeMilliseconds = elapsedTime * 1E-6;
+
+                double gigaFlops = (1.0E-9 * FLOP) / (elapsedTime / TIME_SCALE_SECS);
+                String formatGPUFGlops = String.format("%.2f", gigaFlops);
+
+                System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
+                System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, outputReference));
+            }
+
+            // Print CSV table with RAW elapsed timers
+            try (FileWriter fileWriter = new FileWriter("performanceTable.csv")) {
+                // Write header
+                fileWriter.write("sequential,streams,threads,vectorSingle,vectorParallel,TornadoVM\n");
+                // Write data
+                for (int i = 0; i < RUNS; i++) {
+                    StringBuilder builder = new StringBuilder();
+                    for (int j = 0; j < 6; j++) {
+                        builder.append(timers.get(j).get(i) + ",");
+                    }
+                    fileWriter.write(builder.substring(0, builder.length() - 1));
+                    fileWriter.write("\n");
+                }
+            } catch (IOException e) {
+                System.err.println("An error occurred: " + e.getMessage());
+            }
         }
     }
 
@@ -582,12 +591,17 @@ public class MatrixMultiplication {
         final int size = SIZE;
         System.out.println("[INFO] MxM size: " + size + "x" + size);
 
+        Option option = Option.ALL;
         if (args.length > 0) {
-            if (args[0].equals("--jmh")) {
-                runWithJMH();
-                return;
+            switch (args[0]) {
+                case "jmh" -> {
+                    runWithJMH();
+                    return;
+                }
+                case "onlyJavaSeq" -> option = Option.JAVA_SEQ_ONLY;
+                case "onlyJava" -> option = Option.JAVA_ONLY;
             }
         }
-        runTestAll(size);
+        runTestAll(size, option);
     }
 }
