@@ -319,6 +319,9 @@ tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.Matrix
 ## Run all Java implementations
 tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.MatrixMultiplication onlyJava
 
-## Run all versions, including TornadoVM
+## Run only TornadoVM. It also runs 1 iteration of the sequential implementation to check results
+tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.MatrixMultiplication onlyTornadoVM
+
+## Run all implementations, including TornadoVM
 tornado -cp target/tornadovm-examples-1.0-SNAPSHOT.jar io.github.jjfumero.MatrixMultiplication 
 ```

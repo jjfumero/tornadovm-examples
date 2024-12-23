@@ -64,6 +64,7 @@ public class MatrixMultiplication {
     private enum Option {
         JAVA_SEQ_ONLY,
         JAVA_ONLY,
+        TORNADO_ONLY,
         ALL;
     }
 
@@ -461,6 +462,7 @@ public class MatrixMultiplication {
                 .<ArrayList<Long>>mapToObj(i -> new ArrayList<>()) //
                 .collect(Collectors.toCollection(ArrayList::new));
 
+
         // 1. Sequential
         for (int i = 0; i < RUNS; i++) {
             long start = System.nanoTime();
@@ -474,7 +476,13 @@ public class MatrixMultiplication {
             String formatGPUFGlops = String.format("%.2f", gigaFlops);
 
             System.out.println("Elapsed time: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
+
+            if (option == Option.TORNADO_ONLY) {
+                // We only run one iteration just to run the reference implementation to check results.
+                break;
+            }
         }
+
 
         if (option == Option.ALL || option == Option.JAVA_ONLY) {
             // 2. Parallel Streams
@@ -543,7 +551,7 @@ public class MatrixMultiplication {
             }
         }
 
-        if (option == Option.ALL) {
+        if (option == Option.ALL || option == Option.TORNADO_ONLY) {
             // TornadoVM
             Matrix2DFloat tma = Multiplication.transformMatrixForTornadoVM(matrixA);
             Matrix2DFloat tmb = Multiplication.transformMatrixForTornadoVM(matrixB);
@@ -565,7 +573,8 @@ public class MatrixMultiplication {
                 System.out.print("Elapsed time TornadoVM-GPU: " + (elapsedTime) + " (ns)  -- " + elapsedTimeMilliseconds + " (ms) -- " + formatGPUFGlops + " GFLOP/s");
                 System.out.println(" -- Result Correct? " + Multiplication.verify(resultTornadoVM, outputReference));
             }
-
+        }
+        if (option == Option.ALL) {
             // Print CSV table with RAW elapsed timers
             try (FileWriter fileWriter = new FileWriter("performanceTable.csv")) {
                 // Write header
@@ -600,6 +609,7 @@ public class MatrixMultiplication {
                 }
                 case "onlyJavaSeq" -> option = Option.JAVA_SEQ_ONLY;
                 case "onlyJava" -> option = Option.JAVA_ONLY;
+                case "onlyTornadoVM" -> option = Option.TORNADO_ONLY;
             }
         }
         runTestAll(size, option);
