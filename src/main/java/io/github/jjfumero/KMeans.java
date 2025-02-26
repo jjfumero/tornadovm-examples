@@ -274,7 +274,7 @@ public class KMeans {
             centroidsChanged = updateCentroids(dataPoints, clusters, centroid);
             if (centroidsChanged) {
                 // Reassign data points to clusters
-                clusters = new Matrix2DInt(initMatrix);
+                //clusters = new Matrix2DInt(initMatrix);
                 assignClusters(dataPoints, clusters, centroid);
             }
         }
@@ -285,7 +285,7 @@ public class KMeans {
     }
 
     public static int[] getRandomIndex(VectorFloat2 points, int K) {
-        Random r = new Random();
+        Random r = new Random(71);
         HashSet<Integer> randomValues = new HashSet<>();
         for (int i = 0; i < K; i++) {
             int valX = r.nextInt(points.getLength());
